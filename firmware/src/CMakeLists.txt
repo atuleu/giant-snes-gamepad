@@ -47,9 +47,9 @@ generate_avr_library(lufa-core-device
 set(giant-snes-gamepad-fw_LIBS lufa-core-device)
 generate_avr_firmware(giant-snes-gamepad-fw
                       BOARD micro
-                      SRCS ${SRC_FILES}
+                      SRCS main.c # ${SRC_FILES}
                       HDRS ${HDR_FILES}
-                      LIBS lufa-core-device
+                      # LIBS lufa-core-device
                       PORT ${ARDUINO_SERIAL_PORT}
                       SERIAL ${ARDUINO_SERIAL_EXEC} ${ARDUINO_SERIAL_PORT} -b 9600 -l 
                       )
