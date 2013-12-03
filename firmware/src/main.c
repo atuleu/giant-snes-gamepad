@@ -4,24 +4,8 @@
 #include <avr/power.h>
 #include <avr/wdt.h>
 
-#define val (65535 - 25000)
 
-volatile uint16_t systimeInMs;
-volatile uint16_t foo;
-
-ISR(TIMER0_COMPA_vect) {
-	++systimeInMs;
-}
-
-uint16_t GetMillis() {
-	uint16_t curTime;
-	uint8_t saveSREG = SREG;
-	cli();
-	curTime = systimeInMs;
-	SREG = saveSREG;
-	return curTime;
-}
-
+#include "Systime.h"
 
 void LedDisplayTime(uint8_t sec) {
 	uint8_t saveSREG = SREG;
@@ -54,37 +38,25 @@ void LedDisplayTime(uint8_t sec) {
 	SREG = saveSREG;
 }
 
-int main (void) { 
-	MCUSR &= ~_BV(WDRF);
-	wdt_disable();
-	
-	/* Disable clock division */
-	clock_prescale_set(clock_div_1);
 
-	//disbale all usb realted interrupt
-
-	
-
-
-	TIMSK1 = 0;
-	TIMSK0 |= _BV(OCIE0A); // Enable overflow interrupt 
-
-
-	TCNT0 = 0 ; 
-
-	systimeInMs = 0;
-
-	OCR0A = 249;
-
-	TCCR0A |= _BV(WGM01);
-
-	TCCR0B |= ((1 << CS01) | (1 << CS00)); // Set up timer at Fcpu/64 
-
-	//stuff set by Micro's bootloader crashing everything !!!
+void SetupHardware() {
+	//Arduino's micro bootloader let the USB interrupt on, but if we
+	//are not using USB, well it blows our face because ISR routine
+	//are not there. We disable the interrupt. Maybe a USB clock
+	//freeze will be great too. This is teh first step because we do
+	//not want our USB host to wake and crash us.
 	UDIEN &= ~(_BV(SUSPE) | _BV(EORSTE) );
 
+	//this is not stricly needed as set by Arduino Micro's
+	//bootloader. But just to be absolutely certain :
 
-	sei();
+	MCUSR &= ~_BV(WDRF); // clear watchdog flag
+	wdt_disable(); //disbale it
+	
+	//no prescale of F_CPU
+	clock_prescale_set(clock_div_1);
+
+	//rest of the init here
 
 	DDRC  |= _BV(6);
 	DDRE  |= _BV(6);
@@ -92,21 +64,23 @@ int main (void) {
 	DDRB  |= _BV(7);
 	DDRC  |= _BV(7);
 
-	
+	InitSystime();
 
+}
 
+#define LOOP_IN_MS 1000
+
+int main (void) { 
+	SetupHardware();
 	uint8_t secondEllapsed = 0;
-	uint16_t prevTime = GetMillis();
-
-	#define SEC_VALUE 1000
+	Systime_t prevTime = GetSystime();
 
 	while(1) {
-		uint16_t curTime = GetMillis();
-		if(curTime - prevTime < SEC_VALUE ) {
+		Systime_t curTime = GetSystime();
+		if(curTime - prevTime < LOOP_IN_MS ) {
 			continue;
 		}
-		prevTime += SEC_VALUE;
-		//_delay_ms(1000);
+		prevTime += LOOP_IN_MS;
 		secondEllapsed += 1;
 		LedDisplayTime(secondEllapsed);
 	}

@@ -1,10 +1,14 @@
-set(SRC_FILES Descriptor.c
+set(SRC_FILES # Descriptor.c
               main.c 
-              USB.c
-              GSG.c)
-set(HDR_FILES Descriptor.h
-	          USB.h
-	          GSG.h)
+              # USB.c
+              # GSG.c
+              Systime.c
+              )
+set(HDR_FILES # Descriptor.h
+	          # USB.h
+	          # GSG.h
+	          Systime.h
+	          )
 
 
 #Append Lufa dependencies
@@ -47,7 +51,7 @@ generate_avr_library(lufa-core-device
 set(giant-snes-gamepad-fw_LIBS lufa-core-device)
 generate_avr_firmware(giant-snes-gamepad-fw
                       BOARD micro
-                      SRCS main.c # ${SRC_FILES}
+                      SRCS ${SRC_FILES}
                       HDRS ${HDR_FILES}
                       # LIBS lufa-core-device
                       PORT ${ARDUINO_SERIAL_PORT}
