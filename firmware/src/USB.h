@@ -4,13 +4,10 @@
 #include "LUFAConfig.h"
 #include <LUFA/Drivers/USB/USB.h>
 #include "Descriptor.h"
-#include "GSG.h"
-
-void InitUSBTask();
 
 // Our main Task for the HID 
-void RunUSBTask();
-
+void InitUSB();
+void ProcessUSB();
 
 void EVENT_USB_Device_Connect(void);
 void EVENT_USB_Device_Disconnect(void);

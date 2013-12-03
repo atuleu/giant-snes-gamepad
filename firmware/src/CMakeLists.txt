@@ -1,11 +1,11 @@
-set(SRC_FILES # Descriptor.c
+set(SRC_FILES Descriptor.c
               main.c 
-              # USB.c
+              USB.c
               Gamepad.c
               Systime.c
               )
-set(HDR_FILES # Descriptor.h
-	          # USB.h
+set(HDR_FILES Descriptor.h
+	          USB.h
 	          Gamepad.h
 	          Systime.h
 	          )
@@ -53,7 +53,7 @@ generate_avr_firmware(giant-snes-gamepad-fw
                       BOARD micro
                       SRCS ${SRC_FILES}
                       HDRS ${HDR_FILES}
-                      # LIBS lufa-core-device
+                      LIBS lufa-core-device
                       PORT ${ARDUINO_SERIAL_PORT}
                       SERIAL ${ARDUINO_SERIAL_EXEC} ${ARDUINO_SERIAL_PORT} -b 9600 -l 
                       )

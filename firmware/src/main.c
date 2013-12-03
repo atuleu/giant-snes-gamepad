@@ -1,13 +1,11 @@
 #include <avr/io.h> 
-#include <avr/interrupt.h>
-#include <util/delay.h> 
 #include <avr/power.h>
 #include <avr/wdt.h>
 
 
 #include "Systime.h"
 #include "Gamepad.h"
-
+#include "USB.h"
 
 void SetupHardware() {
 	//Arduino's micro bootloader let the USB interrupt on, but if we
@@ -15,7 +13,8 @@ void SetupHardware() {
 	//are not there. We disable the interrupt. Maybe a USB clock
 	//freeze will be great too. This is teh first step because we do
 	//not want our USB host to wake and crash us.
-	UDIEN &= ~(_BV(SUSPE) | _BV(EORSTE) );
+
+	// UDIEN &= ~(_BV(SUSPE) | _BV(EORSTE) );
 
 	//this is not stricly needed as set by Arduino Micro's
 	//bootloader. But just to be absolutely certain :
@@ -28,9 +27,11 @@ void SetupHardware() {
 
 	//rest of the init here
 
-   
+	
 	InitSystime();
 	InitGamepad();
+
+	InitUSB();
 }
 
 #define LOOP_IN_MS 1000
@@ -39,6 +40,8 @@ int main (void) {
 	SetupHardware();
 
 	while(1) {
+		//highest priority to USB
+		ProcessUSB();
 
 		ProcessGamepad();
 

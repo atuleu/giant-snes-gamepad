@@ -2,9 +2,13 @@
 #include "Descriptor.h"
 
 
-void RunUSBTask() {
+void InitUSB() {
+	USB_Init();
+}
+
+void ProcessUSB() {
 	//Wait for configured device
-	if(USB_DeviceState != DEVICE_STATE_Configured ) {
+	if ( USB_DeviceState != DEVICE_STATE_Configured ) {
 		return;
 	}
 	
@@ -21,7 +25,7 @@ void RunUSBTask() {
 		
 	}
 
-	//LUFA's Magic happen here, should be last call
+	//LUFA's Magic happen here
 	USB_USBTask();
 
 	VendorOutReport_t recvData;
@@ -60,9 +64,9 @@ void EVENT_USB_Device_ControlRequest(void) {
 		                                         REQREC_INTERFACE)) {
 			GamepadInReport_t inReport;
 			SetInHIDReport(&inReport);
-				
+			
 			Endpoint_ClearSETUP();
-				
+			
 			/* Write the report data to the control endpoint */
 			Endpoint_Write_Control_Stream_LE(&inReport, sizeof(GamepadInReport_t));
 			Endpoint_ClearOUT();
