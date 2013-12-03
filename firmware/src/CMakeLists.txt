@@ -1,12 +1,12 @@
 set(SRC_FILES # Descriptor.c
               main.c 
               # USB.c
-              # GSG.c
+              Gamepad.c
               Systime.c
               )
 set(HDR_FILES # Descriptor.h
 	          # USB.h
-	          # GSG.h
+	          Gamepad.h
 	          Systime.h
 	          )
 
