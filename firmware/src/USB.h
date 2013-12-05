@@ -15,8 +15,6 @@ void EVENT_USB_Device_ConfigurationChanged(void);
 void EVENT_USB_Device_ControlRequest(void);
 void EVENT_USB_Device_StartOfFrame(void);
 
-//Sets an in report from app data
-void SetInHIDReport(GamepadInReport_t * report);
                      
 
 #endif //GSG_USB_H_

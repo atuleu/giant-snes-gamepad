@@ -18,8 +18,7 @@ void ProcessUSB() {
 	if(Endpoint_IsINReady()) {
 
 		GamepadInReport_t inReport;
-		SetInHIDReport(&inReport);
-
+		SetHIDReport(&inReport);
 		Endpoint_Write_Stream_LE(&inReport,sizeof(GamepadInReport_t),NULL);
 
 		Endpoint_ClearIN();
@@ -64,7 +63,7 @@ void EVENT_USB_Device_ControlRequest(void) {
 		                                         REQTYPE_CLASS | 
 		                                         REQREC_INTERFACE)) {
 			GamepadInReport_t inReport;
-			SetInHIDReport(&inReport);
+			SetHIDReport(&inReport);
 			
 			Endpoint_ClearSETUP();
 			

@@ -16,6 +16,8 @@
  * led 6 : B5
  * led 7 : B7
  * alive led : C7
+ * button 1 : D4
+ * button 2 : D1
  */
 
 void LedDisplayLSB(uint8_t value) {
@@ -58,7 +60,8 @@ typedef struct {
 	uint8_t   secondEllapsed;
 	Systime_t loopTime;
 	uint8_t   error;
-	uint8_t value;
+	uint8_t   value;
+	uint16_t  buttonStates;
 } GamepadData_t;
 
 GamepadData_t GData;
@@ -69,7 +72,14 @@ void InitGamepad() {
 	DDRD  |= _BV(7);
 	DDRE  |= _BV(6);
 
+	//sets pin as input with pull up
+	PORTD |= _BV(1) | _BV(4);
+	//should not be done, but who knows with this nasty bootloader.
+	DDRD &= ~(_BV(1) | _BV(4));
 
+	GData.error = 0;
+	GData.value = 0;
+	GData.buttonStates = 0;
 	GData.secondEllapsed = 0;
 	GData.loopTime       = GetSystime();
 }
@@ -115,11 +125,34 @@ void ProcessGamepad() {
 		LedDisplayLSB(0);
 	}
 
+	if(PIND & _BV(4)) {
+		GData.buttonStates &= ~_BV(0);
+		PORTB &= ~_BV(6);
+	} else {
+		GData.buttonStates |= _BV(0);
+		PORTB |= _BV(6);
+	}
 
+	if( PIND & _BV(1) ) {
+		GData.buttonStates &= ~_BV(1);
+		PORTC &= ~_BV(6);
+	} else {
+		GData.buttonStates |= _BV(1);
+		PORTC |= _BV(6);
+	}
+
+	//only process these every second
 	if(GetSystime() - GData.loopTime < 1000) {
 		return;
 	}
 	GData.secondEllapsed += 1;
 	PORTC ^= _BV(7); //flash main led if disconnected from breadboard
 	GData.loopTime += 1000;
+}
+
+
+
+void SetHIDReport(GamepadInReport_t * report) {
+	//masks the 4 MSB 
+	report->buttons = GData.buttonStates & 0x0fff;
 }
