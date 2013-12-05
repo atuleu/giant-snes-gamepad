@@ -7,8 +7,8 @@
 
 void InitGamepad();
 void ProcessGamepad();
-
-
+void ReportError(uint8_t error);
+void DisplayValue(uint8_t value);
 // interfaces
 
 

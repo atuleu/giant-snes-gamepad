@@ -1,17 +1,18 @@
 #include "USB.h"
 #include "Descriptor.h"
-
+#include "Gamepad.h"
 
 void InitUSB() {
 	USB_Init();
 }
 
 void ProcessUSB() {
+	static int once = 1;
 	//Wait for configured device
 	if ( USB_DeviceState != DEVICE_STATE_Configured ) {
 		return;
 	}
-	
+
 	Endpoint_SelectEndpoint(GAMEPAD_IN_EPADDR);
 
 	if(Endpoint_IsINReady()) {
@@ -28,7 +29,7 @@ void ProcessUSB() {
 	//LUFA's Magic happen here
 	USB_USBTask();
 
-	VendorOutReport_t recvData;
+	/*	VendorOutReport_t recvData;
 	Endpoint_SelectEndpoint(VENDOR_OUT_EPADDR);
 
 
@@ -42,7 +43,7 @@ void ProcessUSB() {
 		Endpoint_Write_Stream_LE(&recvData, VENDOR_IO_EPSIZE, NULL);
 		Endpoint_ClearIN();		
 
-	}
+		}*/
 
 }
 
@@ -78,12 +79,13 @@ void EVENT_USB_Device_ControlRequest(void) {
 
 void EVENT_USB_Device_ConfigurationChanged(void) {
 	bool res = true;
-
 	res &= Endpoint_ConfigureEndpoint(GAMEPAD_IN_EPADDR, EP_TYPE_INTERRUPT, GAMEPAD_IN_EPSIZE, 1);
-	res &= Endpoint_ConfigureEndpoint(VENDOR_IN_EPADDR, EP_TYPE_BULK, VENDOR_IO_EPSIZE, 1);
-	res &= Endpoint_ConfigureEndpoint(VENDOR_OUT_EPADDR, EP_TYPE_BULK, VENDOR_IO_EPSIZE, 1);
+	//	res &= Endpoint_ConfigureEndpoint(VENDOR_IN_EPADDR, EP_TYPE_BULK, VENDOR_IO_EPSIZE, 1);
+	// res &= Endpoint_ConfigureEndpoint(VENDOR_OUT_EPADDR, EP_TYPE_BULK, VENDOR_IO_EPSIZE, 1);
 
-	// todo report error appropriately
+	if ( res == false) {
+		ReportError(3);
+	}
 
 }
 

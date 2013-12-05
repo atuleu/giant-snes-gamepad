@@ -2,10 +2,10 @@
 
 
 
-const USB_Descriptor_HIDReport_Datatype_t PROGMEM GamepadReport[] = { 
+const USB_Descriptor_HIDReport_Datatype_t  GamepadReport[] = { 
 	HID_RI_USAGE_PAGE( 8 , 0x01 ),		// Generic Desktop
 	HID_RI_USAGE(8 , 0x04),				// Joystick
-	HID_RI_COLLECTION(8 , 0x01 )		// Application collection
+	HID_RI_COLLECTION(8 , 0x01 ),		// Application collection
 	    HID_RI_USAGE_PAGE(8, 0x09),		// Buttons 
 	    HID_RI_USAGE_MINIMUM(8, 1),
 	    HID_RI_USAGE_MAXIMUM(8, 12),
@@ -21,7 +21,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GamepadReport[] = {
 };
 
 
-const USB_Descriptor_Device_t PROGMEM DeviceDescriptor ={
+const USB_Descriptor_Device_t DeviceDescriptor ={
 	.Header						= {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
 	.USBSpecification			= VERSION_BCD(1,1,0),
@@ -38,35 +38,35 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor ={
 
 	.ManufacturerStrIndex		= STR_MANUFACTURER,
 	.ProductStrIndex			= STR_PRODUCT,
-	.SerialNumStrIndex			= USE_INTERNAL_SERIAL,
+	.SerialNumStrIndex			= NO_DESCRIPTOR,
 
 	.NumberOfConfigurations		= FIXED_NUM_CONFIGURATIONS
 };
 
 
-const USB_Descriptor_String_t PROGMEM LanguageString = {
+const USB_Descriptor_String_t LanguageString = {
 	.Header				= {.Size = USB_STRING_LEN(1), .Type = DTYPE_String},
 	.UnicodeString		= {LANGUAGE_ID_ENG}
 };
 
-const USB_Descriptor_String_t PROGMEM ManufacturerString = {
-	.Header				= {.Size = USB_STRING_LEN(12), .Type = DTYPE_String},
-	.UnicodeString		= L"Bar Satellite"
+const USB_Descriptor_String_t ManufacturerString = {
+	.Header				= {.Size = USB_STRING_LEN(9), .Type = DTYPE_String},
+	.UnicodeString		= L"Satellite"
 };
 
-const USB_Descriptor_String_t PROGMEM ProductString	= {
+const USB_Descriptor_String_t ProductString	= {
 	.Header				= {.Size = USB_STRING_LEN(18), .Type = DTYPE_String},
 	.UnicodeString		= L"Giant SNES Gamepad"
 };
 
 
 
-const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
+const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 	.Config = {
 		.Header					= {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration },
 		
 		.TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-		.TotalInterfaces		= 2, //change here if other interfaces
+		.TotalInterfaces		= 1, //change here if other interfaces
 		
 		.ConfigurationNumber	= 1,
 		.ConfigurationStrIndex	= NO_DESCRIPTOR,
@@ -114,7 +114,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
 
 	},
 
-	.Vendor_Interface = {
+	/*	.Vendor_Interface = {
 		.Header					= {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface },
 		.InterfaceNumber		= ID_VENDOR,
 		.AlternateSetting		= 0,
@@ -144,17 +144,16 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
 		.Attributes				= (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 		.EndpointSize			= VENDOR_IO_EPSIZE,
 		.PollingIntervalMS		= 0x05, //\todo consider change this
-	}
+		} */
 
 
 };
 
-
+#include "Gamepad.h"
 
 uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
                                     const uint8_t wIndex,
                                     const void** const descriptorAddress) {
-
 	const uint8_t descriptorType = (wValue >> 8);
 	const uint8_t descriptorNumber = (wValue & 0xff);
 	
@@ -186,7 +185,6 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 			size    = pgm_read_byte(&ProductString.Header.Size);
 			break;
 		}
-
 		break;
 	case HID_DTYPE_HID:
 		address = &ConfigurationDescriptor.HID_GamepadHID;
@@ -196,8 +194,8 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 		address = &GamepadReport;
 		size    = sizeof(GamepadReport);
 		break;
-	}
 
+	}
 	*descriptorAddress = address;
 	return size;
 }
