@@ -78,7 +78,7 @@
 		#define FIXED_NUM_CONFIGURATIONS         1
 //		#define CONTROL_ONLY_DEVICE
 //		#define INTERRUPT_CONTROL_ENDPOINT
-		#define NO_DEVICE_REMOTE_WAKEUP
+//		#define NO_DEVICE_REMOTE_WAKEUP
 		#define NO_DEVICE_SELF_POWER
 
 		/* USB Host Mode Driver Related Tokens: */

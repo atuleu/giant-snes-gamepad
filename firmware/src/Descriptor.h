@@ -13,9 +13,9 @@ typedef struct {
 	USB_HID_Descriptor_HID_t   HID_GamepadHID;
 	USB_Descriptor_Endpoint_t  HID_ReportINEndpoint; //report to the host
 
-	/*	USB_Descriptor_Interface_t Vendor_Interface;
+	USB_Descriptor_Interface_t Vendor_Interface;
 	USB_Descriptor_Endpoint_t  Vendor_DataInEndpoint;
-	USB_Descriptor_Endpoint_t  Vendor_DataOutEndpoint;*/
+	USB_Descriptor_Endpoint_t  Vendor_DataOutEndpoint;
 
 
 } USB_Descriptor_Configuration_t;

@@ -66,7 +66,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 		.Header					= {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration },
 		
 		.TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-		.TotalInterfaces		= 1, //change here if other interfaces
+		.TotalInterfaces		= 2, //change here if other interfaces
 		
 		.ConfigurationNumber	= 1,
 		.ConfigurationStrIndex	= NO_DESCRIPTOR,
@@ -114,7 +114,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 
 	},
 
-	/*	.Vendor_Interface = {
+	.Vendor_Interface = {
 		.Header					= {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface },
 		.InterfaceNumber		= ID_VENDOR,
 		.AlternateSetting		= 0,
@@ -144,9 +144,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 		.Attributes				= (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 		.EndpointSize			= VENDOR_IO_EPSIZE,
 		.PollingIntervalMS		= 0x05, //\todo consider change this
-		} */
-
-
+	}
 };
 
 #include "Gamepad.h"
