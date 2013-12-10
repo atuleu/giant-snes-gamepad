@@ -36,27 +36,7 @@ typedef struct {
 	uint16_t buttons; //Mask for the 16 pressed buttons
 } GamepadInReport_t;
 
-typedef struct {
-	uint16_t paramID;
-	uint16_t paramValue;
-} GSGParameter_t;
 
-typedef struct { 
-	uint8_t statusAndType;	
-	union {
-		struct {
-			uint16_t cells[12];
-		} cellValues;
-		GSGParameter_t param[6];
-	} data;
-
-} VendorInReport_t;
-
-
-typedef struct {
-	uint8_t  instructionID;
-	GSGParameter_t params[6];
-} VendorOutReport_t;
 
 
 
@@ -64,8 +44,11 @@ typedef struct {
 #define VENDOR_IN_EPADDR  ( ENDPOINT_DIR_IN  | 2 )
 #define VENDOR_OUT_EPADDR ( ENDPOINT_DIR_OUT | 3 )
 
+
+
 #define GAMEPAD_IN_EPSIZE 2
-#define VENDOR_IO_EPSIZE  25
+#define VENDOR_IN_EPSIZE  (sizeof(VendorInReport_t))
+#define VENDOR_OUT_EPSIZE (sizeof(VendorOutReport_t))
 
 
 //actually defined in LUFA's headers.
