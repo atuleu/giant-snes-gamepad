@@ -4,6 +4,7 @@
 
 #include "LUFAConfig.h"
 #include <LUFA/Drivers/USB/USB.h>
+#include "../../common/communication.h"
 
 //some mandatory structure for LUFA
 typedef struct {
