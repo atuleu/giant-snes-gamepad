@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
 #include <errno.h>
 
 #define NOT_YET_IMPLEMENTED(className,method) do {  \

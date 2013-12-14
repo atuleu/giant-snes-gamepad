@@ -59,4 +59,6 @@ void Application::Run() {
 	if(gamepads.empty()) {
 		throw std::runtime_error("No Gamepad found");
 	}
+
+	throw std::runtime_error("Should do something");
 }
