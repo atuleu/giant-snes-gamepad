@@ -60,5 +60,22 @@ void Application::Run() {
 		throw std::runtime_error("No Gamepad found");
 	}
 
-	throw std::runtime_error("Should do something");
+	if(gamepads.size() > 1) {
+		throw std::runtime_error("Mechanism for Gamepad selection is not implemented");
+	}
+	unsigned int selected = 0;
+	Gamepad::Ptr dev = gamepads[0];
+	gamepads.clear();
+
+
+	LOG(INFO) << "Opening device " << selected;
+	dev->Open();
+	
+	LOG(INFO) << "Reading LED Frequency";
+	
+	uint16_t value = dev->GetParameter(LED_PERIOD); 
+
+	std::cout << std::endl << "Led Period is "<< value << " ms" 
+	          << std::endl << std::endl;
+
 }

@@ -40,7 +40,7 @@ extern "C" {
 	// Lists all parameters for a GSG
 	typedef enum {
 		PARAM_NULL_ID  = 0,
-		CLK_FREQUENCY  = 1,
+		LED_PERIOD     = 1,
 		CELL_1         = CELL_MAX_PARAMS * 1,  // 0x02
 		CELL_2         = CELL_MAX_PARAMS * 2,  // 0x04
 		CELL_3         = CELL_MAX_PARAMS * 3,  // 0x06
