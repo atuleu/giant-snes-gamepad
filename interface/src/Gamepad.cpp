@@ -3,16 +3,19 @@
 #include "common.h"
 #include <libusb.h> 
 #include <iomanip>
+#include <cstring>
+#include <map>
 
 #include <glog/logging.h>
 
-#include "../../common/communication.h"
+
 
 
 Gamepad::Gamepad(libusb_device * device) 
 	: d_device(device, &libusb_unref_device)
 	, d_bulkInEP(0xff)
-	, d_bulkOutEP(0xff){
+	, d_bulkOutEP(0xff)
+	, d_maxRetries(20){
 	
 
 #ifdef LIBUSB_DARWIN_WORKAROUND
@@ -111,6 +114,9 @@ void Gamepad::Close() {
 
 
 void Gamepad::Init() {
+#ifdef LIBUSB_DARWIN_WORKAROUND
+	AssertOpened();
+#endif //LIBUSB_DARWIN_WORKAROUND
 	typedef std::shared_ptr<struct libusb_config_descriptor> ConfigPtr;
 	struct libusb_config_descriptor * _config(NULL);
 
@@ -188,3 +194,230 @@ void Gamepad::Init() {
 
 }
 
+
+unsigned int Gamepad::MaxRetries() const { 
+	return d_maxRetries; 
+}
+
+void Gamepad::SetMaxRetries(unsigned int max) { 
+	d_maxRetries = max;
+}
+
+
+void Gamepad::BulkAll(bool in, uint8_t * data, size_t size) const {
+	size_t written = 0;
+	for (unsigned int i = d_maxRetries ; i > 0 ; --i) {
+		int transferred;
+		lusb_call(libusb_bulk_transfer,
+		          d_handle.get(),
+		          (in == true) ? d_bulkInEP : d_bulkOutEP,
+		          data + written,
+		          size - written,
+		          &transferred,
+		          0);
+		
+		if ( written == size ) {
+			break;
+		}
+
+	}
+
+	if( written < size ) {
+		std::ostringstream os;
+		os << "Could not transfer " << size 
+		   << " from address " << data 
+		   << " only " << written <<  " bytes written in " 
+		   << d_maxRetries << " trials";
+		throw std::runtime_error(os.str());
+	}
+
+}
+
+
+VendorInReport_t Gamepad::SendInstruction(GSGHostInstruction_e i, 
+                                           const ListOfParameter & params) {
+	if( i <= INST_NONE || i >= INST_MAX) {
+		throw std::out_of_range("Unrecognized instruction");
+	}
+
+	if( params.size() >= NB_PARAMS) {
+		std::ostringstream os;
+		os << "Device only accepts a maximum of " << NB_PARAMS << " parameters, but " 
+		   << params.size() << " required";
+		throw std::out_of_range(os.str());
+	}
+	
+	VendorOutReport_t toSend;
+#ifndef NDEBUG
+	if (sizeof(toSend) != 26) {
+		std::ostringstream os;
+		os << "Internal Error, VendorOutSize_t byte size is " << sizeof(VendorOutReport_t)
+		   << " but 26 expected";
+		throw std::logic_error(os.str());
+	}
+#endif
+
+	toSend.instructionID = i;
+	std::memset(&toSend.params,0,sizeof(toSend.params));
+	for(ListOfParameter::const_iterator p = params.begin();
+	    p != params.end();
+	    ++p ) {
+		toSend.params[p - params.begin()].ID = p->ID;
+		toSend.params[p - params.begin()].Value = p->Value;
+	}
+
+	BulkAll(false,(uint8_t*)&toSend,sizeof(toSend));
+
+	VendorInReport_t toRead;
+	
+	BulkAll(true,(uint8_t*)&toRead,sizeof(toRead));
+
+	return toRead;
+
+}
+
+const std::string VendorInErrorName(const VendorInError_e e) {
+	typedef std::map<VendorInError_e,std::string> NameByErrors;
+	static NameByErrors errors;
+	if(errors.empty()) {
+#define LOAD_ERROR(errName) do {  errors[errName] = #errName; }while(0)
+		LOAD_ERROR(VI_ERR_NO_ERROR);		
+#undef LOAD_ERROR
+		if(errors.size() < VI_ERROR_MAX) {
+			throw std::logic_error("VendorInErrorName() not up to date");
+		}
+	}
+
+	NameByErrors::const_iterator fi = errors.find(e);
+	if(fi == errors.end() ) {
+		static std::string unknown("Unknown error");
+		return unknown;
+	}
+	return fi->second;
+}
+
+void Gamepad::SetParameter(GSGParam_e id , uint16_t value) {
+	ListOfParameter params;
+	GSGParameter_t param;
+	param.ID = id;
+	param.Value = value;
+	params.push_back(param);
+
+	VendorInReport_t res = SendInstruction(INST_SET_PARAMS,params);
+
+	std::ostringstream os;
+	os << "setting parameter 0x"<< std::hex << (int)id << " to value " << std::dec << value;
+	CheckResponse(res,VI_TYPE_PARAM_RETURN,os.str());
+	//nothing to do
+}
+
+void Gamepad::CheckResponse(const VendorInReport_t & report,
+                            VendorInReportType_e expected, 
+                            const std::string & context) {
+	if(report.type != expected ) {
+		std::ostringstream os;
+		os << "Received back unexpected packet type 0x"<< std::hex << (int)report.type
+		   << " while " << context;
+		throw std::runtime_error(os.str());
+	}
+	
+	if(report.error != VI_ERR_NO_ERROR ) {
+		std::ostringstream os;
+		os << "Got error " << VendorInErrorName((VendorInError_e)report.error) 
+		   << " while " << context;
+		throw std::runtime_error(os.str());
+	}
+}
+
+uint16_t Gamepad::GetParameter(GSGParam_e p) {
+	ListOfParameterID ids;
+	ListOfParameter result;
+	
+	ids.push_back(p);
+	GetParametersPrivate(ids.begin(),ids.end(),result);
+
+	if( result.size() != 1) {
+		throw std::logic_error("Got wrong number of result while reading one parameter");
+	}
+	return result[0].Value;
+
+}
+
+
+void Gamepad::GetParameters(const ListOfParameterID & ids, 
+                            ListOfParameter & result) {
+	result.clear();
+	ListOfParameterID::const_iterator thisStart = ids.begin();
+	
+	while(thisStart != ids.end() ) {
+		ListOfParameterID::const_iterator thisEnd = thisStart;
+		for(; thisEnd - thisStart < NB_PARAMS && thisEnd != ids.end(); ++thisEnd) {
+		}
+
+		GetParametersPrivate(thisStart,thisEnd,result);
+
+		thisStart = thisEnd;
+
+	}
+}
+
+
+void Gamepad::GetParametersPrivate(const ListOfParameterID::const_iterator & start,
+                                   const ListOfParameterID::const_iterator & end,
+                                   ListOfParameter & result) {
+	ListOfParameter toSend;
+	std::ostringstream context;
+	context << " reading parameter(s) {";
+
+	for(ListOfParameterID::const_iterator id = start;
+	    id != end;
+	    ++id) {
+		GSGParameter_t p;
+		p.ID = *id;
+		p.Value = 0;
+		toSend.push_back(p);
+		context << std::hex << " 0x" << (int) *id;
+	}
+	context << " }";
+
+	VendorInReport_t res = SendInstruction(INST_READ_PARAMS,toSend);
+	
+	CheckResponse(res,VI_TYPE_PARAM_RETURN,context.str());
+
+	for(ListOfParameterID::const_iterator id = start;
+	    id != end;
+	    ++id) {
+		unsigned int i = id - start;
+		if ( res.data.params[i].ID != *id ) {
+			std::ostringstream os;
+			os << "USB Device send back parameter 0x" << std::hex << (int)res.data.params[i].ID 
+			   << " instead of 0x" << *id << " while " << context.str();
+			throw std::runtime_error(os.str());
+		}
+		GSGParameter_t p = res.data.params[i];
+		result.push_back(p);
+	}
+	
+}
+                                   
+const Gamepad::LoadCellValues & Gamepad::GetCells() {
+	d_cellValues.assign(0,NB_CELLS);
+
+	ListOfParameter  toSend;
+	VendorInReport_t res = SendInstruction(INST_FETCH_CELL_VALUES,toSend);
+	
+	CheckResponse(res,VI_TYPE_CELL_RETURN,"fetching cells values");
+
+	for(unsigned int i = 0; i < NB_CELLS; ++i) {
+		d_cellValues[i] = res.data.cells[i];
+	}
+
+	return d_cellValues;
+}
+
+
+
+void Gamepad::SaveParamInEEPROM() {
+	VendorInReport_t res = SendInstruction(INST_SAVE_IN_EEPROM,ListOfParameter());
+	CheckResponse(res,VI_TYPE_PARAM_RETURN," saving parameter in eeprom");
+}

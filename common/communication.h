@@ -10,9 +10,9 @@ extern "C" {
 
 	// types of packet that can be send back from the GSG
 	typedef enum {
-		VI_TYPE_INVALID   = 0,
-		VI_TYPE_CONTROL_RETURN = 1,
-		VI_TYPE_CELL_VALUES    =2,
+		VI_TYPE_INVALID        = 0,
+		VI_TYPE_PARAM_RETURN   = 1,
+		VI_TYPE_CELL_RETURN    = 2,
 	} VendorInReportType_e;
 
 	
@@ -20,14 +20,13 @@ extern "C" {
 	// All errors type return by the GSG
 	typedef enum {
 		VI_ERR_NO_ERROR = 0,
-		
-
+		VI_ERROR_MAX
 	} VendorInError_e;
 
 	// A Packeted parameter, concatenation of An ID and a 16 bit value
-	typedef struct {
-		uint8_t paramID;
-		uint16_t paramValue;
+	typedef struct __attribute__((__packed__))  {
+		uint8_t ID;
+		uint16_t Value;
 	} GSGParameter_t;
 
 	// Parameter for a load cell
@@ -41,7 +40,7 @@ extern "C" {
 	// Lists all parameters for a GSG
 	typedef enum {
 		PARAM_NULL_ID  = 0,
-		// 1 - 3 reserved
+		CLK_FREQUENCY  = 1,
 		CELL_1         = CELL_MAX_PARAMS * 1,  // 0x02
 		CELL_2         = CELL_MAX_PARAMS * 2,  // 0x04
 		CELL_3         = CELL_MAX_PARAMS * 3,  // 0x06
@@ -60,26 +59,30 @@ extern "C" {
 #define CELL_PARAM(nbCell,param) ( CELL_NUM_PARAMS * (nbCell) + (param))
 	
 	typedef enum {
+		INST_NONE              = 0,
 		INST_READ_PARAMS       = 1,
 		INST_SET_PARAMS        = 2,
 		INST_SAVE_IN_EEPROM    = 3,
 		INST_FETCH_CELL_VALUES = 4,
-	} GSGHostInstruction_t;
+		INST_MAX
+	} GSGHostInstruction_e;
 
+#define NB_CELLS 12
+#define NB_PARAMS 8
 
-	typedef struct { 
+	typedef struct __attribute__((__packed__)) { 
 		uint8_t type;
 		uint8_t error;
 		union {
-			uint16_t cells[12];
-			GSGParameter_t param[8];
+			uint16_t cells[NB_CELLS];
+			GSGParameter_t params[NB_PARAMS];
 		} data;
 	} VendorInReport_t;
 	
 	
-	typedef struct {
+	typedef struct __attribute__((__packed__)) {
 		uint16_t  instructionID;		
-		GSGParameter_t params[8];
+		GSGParameter_t params[NB_PARAMS];
 	} VendorOutReport_t;
 	
 	
