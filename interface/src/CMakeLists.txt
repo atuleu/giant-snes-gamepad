@@ -1,9 +1,11 @@
 set(SRC_FILES main.cpp
 	          Application.cpp
-	          Gamepad.cpp)
+	          Gamepad.cpp
+	          common.cpp)
 
 set(HDR_FILES Application.h
-	          Gamepad.h)
+	          Gamepad.h
+	          common.h)
 
 include_directories(${NCURSES_INCLUDE_DIRS} ${USB_INCLUDE_DIRS})
 

@@ -2,6 +2,8 @@
 
 #include <memory>
 
+
+
 class Application {
 public :
 	typedef std::shared_ptr<Application> Ptr;

@@ -3,7 +3,12 @@
 #include <iostream> 
 #include <unistd.h>
 
+#include <libusb.h> 
+
 Application::Application() {
+
+
+
 	std::cout << "Hello World!" << std::endl;
 }
 
