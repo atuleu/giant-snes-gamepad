@@ -43,7 +43,7 @@ public :
 
 Application::Application() 
 	: d_lusb(new LUsb())
-	, d_ncurses(new NCurses()) {
+	, d_ncurses(/*new NCurses()*/) { //disable ncurses for early dev
 	LOG(INFO) << "Starting up application.";
 }
 
