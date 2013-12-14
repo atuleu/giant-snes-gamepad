@@ -9,6 +9,9 @@ set(HDR_FILES Application.h
 
 include_directories(${NCURSES_INCLUDE_DIRS} ${DEPS_INCLUDE_DIRS})
 
+if(APPLE)
+	add_definitions("-DLIBUSB_DARWIN_WORKAROUND")
+endif(APPLE)
 
 add_executable(giant-snes-gamepad-interface ${SRC_FILES} ${HDR_FILES})
 

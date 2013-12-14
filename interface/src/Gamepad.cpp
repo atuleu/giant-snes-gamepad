@@ -14,11 +14,18 @@ Gamepad::Gamepad(libusb_device * device)
 	, d_bulkInEP(0xff)
 	, d_bulkOutEP(0xff){
 	
-	//need to open to avoid segfault of libsusb, see http://www.libusb.org/ticket/171
+
+#ifdef LIBUSB_DARWIN_WORKAROUND
+	//need to open to avoid segfault of libsusb, see
+	//http://www.libusb.org/ticket/171
 	Open();
+#endif
 	Init();
-	
-	
+#ifdef LIBUSB_DARWIN_WORKAROUND
+	// uneeded, but would like not to forget Open() call for
+	// cross-platform development
+	Close();
+#endif
 }
 
 
