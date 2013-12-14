@@ -14,6 +14,8 @@ endif(NOT NCURSES_INCLUDE_DIRS)
 
 pkg_check_modules(USB libusb-1.0 REQUIRED)
 
+#we use C++11
+add_definitions("--std=c++11")
 
 add_subdirectory(src)
 

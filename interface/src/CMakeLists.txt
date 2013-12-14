@@ -1,6 +1,7 @@
-set(SRC_FILES main.cpp)
+set(SRC_FILES main.cpp
+	          Application.cpp)
 
-set(HDR_FILES )
+set(HDR_FILES Application.h)
 
 include_directories(${NCURSES_INCLUDE_DIRS} ${USB_INCLUDE_DIRS})
 
