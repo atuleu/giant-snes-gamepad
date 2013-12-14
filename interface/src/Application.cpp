@@ -5,16 +5,15 @@
 
 #include <libusb.h> 
 
+#include <glog/logging.h>
+
 Application::Application() {
-
-
-
-	std::cout << "Hello World!" << std::endl;
+	LOG(INFO) << "Hello World!";
 }
 
 
 Application::~Application() {
-	std::cout << "Good bye World!" << std::endl;
+	LOG(INFO) << "Good bye World!";
 }
 
 

@@ -12,7 +12,7 @@ if(NOT NCURSES_INCLUDE_DIRS)
 	message(FATAL_ERROR "Found NCurses library but not the header o_O")
 endif(NOT NCURSES_INCLUDE_DIRS)
 
-pkg_check_modules(USB libusb-1.0 REQUIRED)
+pkg_check_modules(DEPS libusb-1.0 libglog REQUIRED)
 
 #we use C++11
 add_definitions("--std=c++11")
