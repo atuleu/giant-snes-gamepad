@@ -39,3 +39,28 @@ private :
 		syscall_throw(fnct, res_ ## fnct); \
 	} \
 }while(0)
+
+
+class LibUsbError : public std::runtime_error {
+public :
+	LibUsbError(int error);
+	LibUsbError(const std::string & reason,int error);
+	virtual ~LibUsbError() throw();
+
+	int Error() const;
+private : 
+
+	int d_error;
+	
+};
+
+#define lusb_throw(fnct,error) do { \
+	throw LibUsbError( #fnct  + std::string("() returned with error"),error); \
+}while(0)
+
+#define lusb_call(fnct,...) do { \
+	int usbErr_ ## fnct = fnct(__VA_ARGS__); \
+	if (usbErr_ ## fnct < 0) { \
+		lusb_throw(fnct,usbErr_ ## fnct); \
+	} \
+}while(0)

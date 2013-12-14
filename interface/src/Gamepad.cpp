@@ -10,8 +10,8 @@ Gamepad::~Gamepad() {
 }
 
 
-Gamepad::List Gamepad::ListAllGamepads() {
-	NOT_YET_IMPLEMENTED(Gamepad,ListAllGamepad);
+Gamepad::List Gamepad::ListAll() {
+	NOT_YET_IMPLEMENTED(Gamepad,ListAll);
 }
 
 void Gamepad::Open() {

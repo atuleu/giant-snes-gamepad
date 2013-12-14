@@ -7,22 +7,56 @@
 
 #include <glog/logging.h>
 
-Application::Application() {
-	LOG(INFO) << "Hello World!";
+#include "common.h"
+#include "Gamepad.h"
+
+#include <ncurses.h>
+
+class LUsb : public StaticLibWrapper {
+public :
+	LUsb() {
+		LOG(INFO) << "Initializing libusb context";
+		lusb_call(libusb_init,NULL);
+	}
+	virtual ~LUsb() {
+		LOG(INFO) << "Cleaning up libusb";
+		libusb_exit(NULL);
+	}
+};
+
+class NCurses : public StaticLibWrapper {
+public :
+	NCurses() {
+		LOG(INFO) << "Initializing ncurses";
+		if(initscr() == NULL ) {
+			throw std::runtime_error("Could not initialize ncurses");
+		}
+	}
+
+	virtual ~NCurses() {
+		LOG(INFO) << "Cleaning ncurses";
+		if(ERR == endwin() ) {
+			LOG(ERROR) << "Could not clean ncurses";
+		}
+	}
+};
+
+Application::Application() 
+	: d_lusb(new LUsb())
+	, d_ncurses(new NCurses()) {
+	LOG(INFO) << "Starting up application.";
 }
 
 
-Application::~Application() {
-	LOG(INFO) << "Good bye World!";
+Application::~Application() {	
+	LOG(INFO) << "Cleaning up Application";
 }
 
 
 void Application::Run() {
-	for (unsigned int seconds = 10; seconds > 0 ; --seconds) {
-		std::cout << "I will crash in " << seconds << " seconds" << std::endl;
-		sleep(1);
+	Gamepad::List gamepads = Gamepad::ListAll();
+
+	if(gamepads.empty()) {
+		throw std::runtime_error("No Gamepad found");
 	}
-	
-	throw std::runtime_error("I crashed, told you so!");
-	 
 }

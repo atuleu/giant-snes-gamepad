@@ -27,8 +27,9 @@ int main(int /*argc*/, char ** argv) {
 		app = Application::Ptr(new Application());
 		app->Run();
 	} catch (const std::exception & e) {
+		LOG(WARNING) << "Terminating application due to uncatched throw";
 		app = Application::Ptr();
-		LOG(ERROR) << "Got error : "<< e.what();
+		LOG(ERROR) << "Got exception : "<< e.what();
 	}
 	return res;
 }

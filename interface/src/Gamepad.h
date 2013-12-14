@@ -8,7 +8,7 @@ public :
 	typedef std::shared_ptr<Gamepad> Ptr;
 	typedef std::vector<Gamepad::Ptr> List;
 	
-	static List ListAllGamepads();
+	static List ListAll();
 
 	~Gamepad();
 
