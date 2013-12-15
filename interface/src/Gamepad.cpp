@@ -252,8 +252,8 @@ void Gamepad::BulkAll(bool in, uint8_t * data, size_t size) const {
 		          data + written,
 		          size - written,
 		          &transferred,
-		          1000);
-		
+		          0);
+		written += transferred;
 		if ( written == size ) {
 			break;
 		}

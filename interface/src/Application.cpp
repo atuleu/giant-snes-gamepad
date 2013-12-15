@@ -72,7 +72,7 @@ void Application::Run() {
 	dev->Open();
 	libusb_set_debug(NULL,3);
 	LOG(INFO) << "Reading LED Frequency";
-	dev->SetMaxRetries(1000);
+	dev->SetMaxRetries(1);
 
 	Gamepad::ListOfParameterID ids;
 	Gamepad::ListOfParameter params;

@@ -43,7 +43,8 @@ void ProcessUSB() {
 		needToSend = 1;
 	}
 
-	if( recvData.instructionID == INST_READ_PARAMS && 
+	if( needToSend == 1 &&
+	    recvData.instructionID == INST_READ_PARAMS && 
 	    recvData.params[0].ID == LED_PERIOD &&
 	    recvData.params[1].ID == CELL_1 &&
 	    recvData.params[2].ID == CELL_2 &&
@@ -52,13 +53,15 @@ void ProcessUSB() {
 	    recvData.params[5].ID == CELL_5 &&
 	    recvData.params[6].ID == CELL_6 &&
 	    recvData.params[7].ID == CELL_7 ) {
-		DisplayValue(0);
+		
 
+		needToSend = 2;
 	}
 
 
 	Endpoint_SelectEndpoint(VENDOR_IN_EPADDR);
-	if(needToSend && Endpoint_IsINReady()) {
+	if(needToSend == 2 && Endpoint_IsINReady()) {
+		DisplayValue(0);
 		Endpoint_Write_Stream_LE(&sendData, VENDOR_IN_EPSIZE, NULL);
 		Endpoint_ClearIN();
 		needToSend = 0;
