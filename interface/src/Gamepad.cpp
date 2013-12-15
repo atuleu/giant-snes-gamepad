@@ -21,18 +21,31 @@ Gamepad::Gamepad(libusb_device * device)
 #ifdef LIBUSB_DARWIN_WORKAROUND
 	//need to open to avoid segfault of libsusb, see
 	//http://www.libusb.org/ticket/171
-	Open();
+	libusb_device_handle * handle;
+	try { 
+		d_mutex.lock();
+		lusb_call(libusb_open,d_device.get(),&handle);
 #endif
 	Init();
 #ifdef LIBUSB_DARWIN_WORKAROUND
 	// uneeded, but would like not to forget Open() call for
 	// cross-platform development
-	Close();
+	//Close();
+	} catch(...) {
+		libusb_close(handle);
+		d_mutex.unlock();
+		throw;
+	}
+	libusb_close(handle);
+	d_mutex.unlock();	
 #endif
+
 }
 
 
 Gamepad::~Gamepad() {
+	//explicitely close the thread
+	Close();
 }
 
 
@@ -100,23 +113,37 @@ Gamepad::List Gamepad::ListAll() {
 }
 
 void Gamepad::Open() {
+	d_mutex.lock();
 	if(d_handle) {
+		d_mutex.unlock();
 		return;
 	}
-	libusb_device_handle * handle;
-	lusb_call(libusb_open,d_device.get(),&handle);
-	d_handle = HandlePtr(handle,&libusb_close);
+	try {
+		libusb_device_handle * handle;
+		lusb_call(libusb_open,d_device.get(),&handle);
+		d_handle = HandlePtr(handle,&libusb_close);
+		lusb_call(libusb_claim_interface,d_handle.get(),d_vendorInterface);
+	} catch(...) {
+		d_mutex.unlock();
+		throw;
+	}
+	d_mutex.unlock();
 }
 
 void Gamepad::Close() {
+	d_mutex.lock();
+	try {
+		lusb_call(libusb_release_interface,d_handle.get(),d_vendorInterface);
+	} catch( const std::exception & e) {
+		LOG(ERROR) << "Got error on Gamepad interface release: " << e.what(); 
+	}
+	// this does not throws
 	d_handle = HandlePtr();
+	d_mutex.unlock();
 }
 
 
 void Gamepad::Init() {
-#ifdef LIBUSB_DARWIN_WORKAROUND
-	AssertOpened();
-#endif //LIBUSB_DARWIN_WORKAROUND
 	typedef std::shared_ptr<struct libusb_config_descriptor> ConfigPtr;
 	struct libusb_config_descriptor * _config(NULL);
 
@@ -160,6 +187,8 @@ void Gamepad::Init() {
 		throw std::runtime_error(os.str());
 	}
 
+	d_vendorInterface = vendor->bInterfaceNumber;
+
 	// check for Vendor interface endpoint
 	const struct libusb_endpoint_descriptor *in(NULL),*out(NULL);
 	for(unsigned int i = 0 ; i < vendor->bNumEndpoints; ++i) {
@@ -188,10 +217,14 @@ void Gamepad::Init() {
 		}
 		throw std::runtime_error(os.str());
 	}
+
+
 	
 	d_bulkOutEP = out->bEndpointAddress;
 	d_bulkInEP = in->bEndpointAddress;
 
+	LOG(INFO) << "Device Initialized accordingly with OUT EP 0x" << std::hex 
+	          << (int)d_bulkOutEP << " and IN EP 0x" << (int)d_bulkInEP;
 }
 
 
@@ -206,15 +239,20 @@ void Gamepad::SetMaxRetries(unsigned int max) {
 
 void Gamepad::BulkAll(bool in, uint8_t * data, size_t size) const {
 	size_t written = 0;
+	uint8_t ep = (in == true) ? d_bulkInEP : d_bulkOutEP;
+
+	DLOG(INFO) << "Bulk Transfer of " << size << " bytes starting " << (void*)data 
+	           << " to EP 0x" << std::hex << (int)ep << " of device " << d_handle;
+		
 	for (unsigned int i = d_maxRetries ; i > 0 ; --i) {
 		int transferred;
 		lusb_call(libusb_bulk_transfer,
 		          d_handle.get(),
-		          (in == true) ? d_bulkInEP : d_bulkOutEP,
+		          ep,
 		          data + written,
 		          size - written,
 		          &transferred,
-		          0);
+		          1000);
 		
 		if ( written == size ) {
 			break;
@@ -236,11 +274,13 @@ void Gamepad::BulkAll(bool in, uint8_t * data, size_t size) const {
 
 VendorInReport_t Gamepad::SendInstruction(GSGHostInstruction_e i, 
                                            const ListOfParameter & params) {
+	AssertOpened();
+
 	if( i <= INST_NONE || i >= INST_MAX) {
 		throw std::out_of_range("Unrecognized instruction");
 	}
 
-	if( params.size() >= NB_PARAMS) {
+	if( params.size() > NB_PARAMS) {
 		std::ostringstream os;
 		os << "Device only accepts a maximum of " << NB_PARAMS << " parameters, but " 
 		   << params.size() << " required";
@@ -256,24 +296,31 @@ VendorInReport_t Gamepad::SendInstruction(GSGHostInstruction_e i,
 		throw std::logic_error(os.str());
 	}
 #endif
-
-	toSend.instructionID = i;
-	std::memset(&toSend.params,0,sizeof(toSend.params));
-	for(ListOfParameter::const_iterator p = params.begin();
-	    p != params.end();
-	    ++p ) {
-		toSend.params[p - params.begin()].ID = p->ID;
-		toSend.params[p - params.begin()].Value = p->Value;
-	}
-
-	BulkAll(false,(uint8_t*)&toSend,sizeof(toSend));
-
+	//we should lock by mutexes any communication, to avoid to leave
+	//the device with half-communication, if close is used. Care
+	//should be taken with exception by catching and releasing
+	//any. Gosh I love go and its defer keyword
 	VendorInReport_t toRead;
-	
-	BulkAll(true,(uint8_t*)&toRead,sizeof(toRead));
-
+	d_mutex.lock();
+	try {
+		toSend.instructionID = i;
+		std::memset(&toSend.params,0,sizeof(toSend.params));
+		for(ListOfParameter::const_iterator p = params.begin();
+		    p != params.end();
+		    ++p ) {
+			toSend.params[p - params.begin()].ID = p->ID;
+			toSend.params[p - params.begin()].Value = p->Value;
+		}
+		DLOG(INFO) << "Sending Out Report ";
+		BulkAll(false,(uint8_t*)&toSend,sizeof(toSend));
+		DLOG(INFO) << "Reading In Report ";
+		BulkAll(true,(uint8_t*)&toRead,sizeof(toRead));
+	} catch (...) {
+		d_mutex.unlock();
+		throw;
+	}
+	d_mutex.unlock();
 	return toRead;
-
 }
 
 const std::string VendorInErrorName(const VendorInError_e e) {

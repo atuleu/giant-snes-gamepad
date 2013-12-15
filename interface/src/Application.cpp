@@ -70,12 +70,24 @@ void Application::Run() {
 
 	LOG(INFO) << "Opening device " << selected;
 	dev->Open();
-	
+	libusb_set_debug(NULL,3);
 	LOG(INFO) << "Reading LED Frequency";
-	
-	uint16_t value = dev->GetParameter(LED_PERIOD); 
+	dev->SetMaxRetries(1000);
 
-	std::cout << std::endl << "Led Period is "<< value << " ms" 
+	Gamepad::ListOfParameterID ids;
+	Gamepad::ListOfParameter params;
+	ids.push_back(LED_PERIOD);
+	ids.push_back(CELL_1);
+	ids.push_back(CELL_2);
+	ids.push_back(CELL_3);
+	ids.push_back(CELL_4);
+	ids.push_back(CELL_5);
+	ids.push_back(CELL_6);
+	ids.push_back(CELL_7);
+	
+	dev->GetParameters(ids,params); 
+
+	std::cout << std::endl << "Led Period is "<< params[0].Value << " ms" 
 	          << std::endl << std::endl;
 
 }

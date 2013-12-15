@@ -7,6 +7,7 @@
 #include <libusb.h>
 
 #include "../../common/communication.h"
+#include <mutex>
 
 class Gamepad {
 public :
@@ -50,7 +51,6 @@ public :
 private :
 	typedef std::shared_ptr<libusb_device>        DevicePtr;
 	typedef std::shared_ptr<libusb_device_handle> HandlePtr;
-
 	
 	
 	Gamepad(libusb_device * dev);
@@ -75,9 +75,11 @@ private :
 	HandlePtr d_handle;
 
 	uint8_t d_bulkInEP,d_bulkOutEP;
+	int     d_vendorInterface;
 	unsigned int d_maxRetries;
 
 	LoadCellValues d_cellValues;
+	std::mutex d_mutex;
 };
 
 
