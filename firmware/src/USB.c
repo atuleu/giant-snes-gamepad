@@ -61,8 +61,13 @@ void ProcessUSB() {
 
 	Endpoint_SelectEndpoint(VENDOR_IN_EPADDR);
 	if(needToSend == 2 && Endpoint_IsINReady()) {
-		DisplayValue(0);
-		Endpoint_Write_Stream_LE(&sendData, VENDOR_IN_EPSIZE, NULL);
+		uint8_t error;
+		uint8_t trials = 1;
+		while( ( error = Endpoint_Write_Stream_LE(&sendData, VENDOR_IN_EPSIZE, NULL) ) == ENDPOINT_RWSTREAM_IncompleteTransfer ) {
+			++trials;
+		}
+		DisplayValue(trials);
+		
 		Endpoint_ClearIN();
 		needToSend = 0;
 	}

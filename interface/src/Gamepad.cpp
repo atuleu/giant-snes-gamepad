@@ -246,13 +246,14 @@ void Gamepad::BulkAll(bool in, uint8_t * data, size_t size) const {
 		
 	for (unsigned int i = d_maxRetries ; i > 0 ; --i) {
 		int transferred;
+		//warning timeout == 0 is NOT timeout infinite, at least on darwin !
 		lusb_call(libusb_bulk_transfer,
 		          d_handle.get(),
 		          ep,
 		          data + written,
 		          size - written,
 		          &transferred,
-		          0);
+		          100);
 		written += transferred;
 		if ( written == size ) {
 			break;

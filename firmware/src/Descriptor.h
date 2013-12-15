@@ -42,8 +42,8 @@ typedef struct {
 
 
 #define GAMEPAD_IN_EPADDR ( ENDPOINT_DIR_IN  | 1 )
-#define VENDOR_IN_EPADDR  ( ENDPOINT_DIR_IN  | 2 )
-#define VENDOR_OUT_EPADDR ( ENDPOINT_DIR_OUT | 3 )
+#define VENDOR_IN_EPADDR  ( ENDPOINT_DIR_IN  | 3 )
+#define VENDOR_OUT_EPADDR ( ENDPOINT_DIR_OUT | 4 )
 
 
 
