@@ -14,16 +14,10 @@ typedef struct {
 	USB_HID_Descriptor_HID_t   HID_GamepadHID;
 	USB_Descriptor_Endpoint_t  HID_ReportINEndpoint; //report to the host
 
-	USB_Descriptor_Interface_t Vendor_Interface;
-	USB_Descriptor_Endpoint_t  Vendor_DataInEndpoint;
-	USB_Descriptor_Endpoint_t  Vendor_DataOutEndpoint;
-
-
 } USB_Descriptor_Configuration_t;
 
 enum InterfaceDescriptors {
-	ID_GAMEPAD = 0,
-	ID_VENDOR  = 1,
+	IF_GAMEPAD = 0,
 };
 
 
@@ -42,14 +36,9 @@ typedef struct {
 
 
 #define GAMEPAD_IN_EPADDR ( ENDPOINT_DIR_IN  | 1 )
-#define VENDOR_IN_EPADDR  ( ENDPOINT_DIR_IN  | 3 )
-#define VENDOR_OUT_EPADDR ( ENDPOINT_DIR_OUT | 4 )
-
 
 
 #define GAMEPAD_IN_EPSIZE 2
-#define VENDOR_IN_EPSIZE  (sizeof(VendorInReport_t))
-#define VENDOR_OUT_EPSIZE (sizeof(VendorOutReport_t))
 
 
 //actually defined in LUFA's headers.
@@ -57,6 +46,5 @@ typedef struct {
                                     const uint16_t wIndex,
                                     const void** const descriptorAddress) 
                                     ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);*/
-
 
 #endif //GSG_FW_DESCRIPTOR_H_

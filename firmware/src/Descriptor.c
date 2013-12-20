@@ -32,7 +32,7 @@ const USB_Descriptor_Device_t DeviceDescriptor ={
 	.Endpoint0Size				= FIXED_CONTROL_ENDPOINT_SIZE,
 
 	.VendorID					= 0x03EB, // LUFA's VID
-	.ProductID					= 0x2046, // LUFA Test PID / VID
+	.ProductID					= 0x2043, // LUFA Joystick
 	.ReleaseNumber				= VERSION_BCD(0x69,0x04,0x02), //Unique version number to test if its ours device
 	
 
@@ -80,7 +80,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 	.HID_Interface = {
 		.Header					= {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface},
 		
-		.InterfaceNumber		= ID_GAMEPAD,
+		.InterfaceNumber		= IF_GAMEPAD,
 		.AlternateSetting		= 0x00,
 
 		.TotalEndpoints			= 1,
@@ -114,37 +114,6 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 
 	},
 
-	.Vendor_Interface = {
-		.Header					= {.Size = sizeof(USB_Descriptor_Interface_t), .Type = DTYPE_Interface },
-		.InterfaceNumber		= ID_VENDOR,
-		.AlternateSetting		= 0,
-		.TotalEndpoints			= 2,
-
-		.Class					= 0xFF, // vendor specific =)
-		.SubClass				= 0xFF, // vendor specific =)
-		.Protocol				= 0xFF, // vendor specific =)
-
-		.InterfaceStrIndex		= NO_DESCRIPTOR
-
-	},
-
-	.Vendor_DataInEndpoint = {
-		.Header					= { .Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint },
-
-		.EndpointAddress		= VENDOR_IN_EPADDR,
-		.Attributes				= (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-		.EndpointSize			= VENDOR_IN_EPSIZE,
-		.PollingIntervalMS		= 0x00, //\todo consider change this
-	},
-
-	.Vendor_DataOutEndpoint = {
-		.Header					= { .Size = sizeof(USB_Descriptor_Endpoint_t), .Type = DTYPE_Endpoint },
-
-		.EndpointAddress		= VENDOR_OUT_EPADDR,
-		.Attributes				= (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
-		.EndpointSize			= VENDOR_OUT_EPSIZE,
-		.PollingIntervalMS		= 0x05, //\todo consider change this
-	}
 };
 
 #include "Gamepad.h"
