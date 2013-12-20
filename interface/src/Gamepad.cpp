@@ -123,6 +123,7 @@ void Gamepad::Open() {
 		lusb_call(libusb_open,d_device.get(),&handle);
 		d_handle = HandlePtr(handle,&libusb_close);
 		lusb_call(libusb_claim_interface,d_handle.get(),d_vendorInterface);
+		
 	} catch(...) {
 		d_mutex.unlock();
 		throw;
@@ -314,6 +315,11 @@ VendorInReport_t Gamepad::SendInstruction(GSGHostInstruction_e i,
 		}
 		DLOG(INFO) << "Sending Out Report ";
 		BulkAll(false,(uint8_t*)&toSend,sizeof(toSend));
+#ifdef LIBUSB_DARWIN_WORKAROUND
+		DLOG(INFO) << "CLearing halt condition on IN EP";
+		lusb_call(libusb_clear_halt,d_handle.get(),d_bulkInEP);
+#endif //LIBUSB_DARWIN_WORKAROUND
+
 		DLOG(INFO) << "Reading In Report ";
 		BulkAll(true,(uint8_t*)&toRead,sizeof(toRead));
 	} catch (...) {

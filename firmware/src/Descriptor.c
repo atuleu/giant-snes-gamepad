@@ -32,7 +32,7 @@ const USB_Descriptor_Device_t DeviceDescriptor ={
 	.Endpoint0Size				= FIXED_CONTROL_ENDPOINT_SIZE,
 
 	.VendorID					= 0x03EB, // LUFA's VID
-	.ProductID					= 0x2040, // LUFA Test PID / VID
+	.ProductID					= 0x2046, // LUFA Test PID / VID
 	.ReleaseNumber				= VERSION_BCD(0x69,0x04,0x02), //Unique version number to test if its ours device
 	
 
@@ -134,7 +134,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 		.EndpointAddress		= VENDOR_IN_EPADDR,
 		.Attributes				= (EP_TYPE_BULK | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 		.EndpointSize			= VENDOR_IN_EPSIZE,
-		.PollingIntervalMS		= 0x05, //\todo consider change this
+		.PollingIntervalMS		= 0x00, //\todo consider change this
 	},
 
 	.Vendor_DataOutEndpoint = {

@@ -19,7 +19,7 @@ public :
 	// LUFA's VID
 	const static uint16_t ID_VENDOR   = 0x03eb;
 	// LUFA's Test PID
-	const static uint16_t ID_PRODUCT  = 0x2040;
+	const static uint16_t ID_PRODUCT  = 0x2046;
 	// CUSTOM Fixed BCD VERSION
 	const static uint16_t BCD_VERSION = 0x6942;
 	// Vendor Specific Class

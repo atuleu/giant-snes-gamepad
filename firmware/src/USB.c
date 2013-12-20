@@ -31,9 +31,18 @@ void ProcessUSB() {
 	VendorOutReport_t recvData;
 
 	VendorInReport_t sendData;
-	memset(&sendData,1,sizeof(sendData));
+	memset(&sendData,0,sizeof(sendData));
 	sendData.type = VI_TYPE_PARAM_RETURN;
 	sendData.error = 0;
+	sendData.data.params[0].ID = LED_PERIOD;
+	sendData.data.params[1].ID = CELL_1;
+	sendData.data.params[2].ID = CELL_2;
+	sendData.data.params[3].ID = CELL_3;
+	sendData.data.params[4].ID = CELL_4;
+	sendData.data.params[5].ID = CELL_5;
+	sendData.data.params[6].ID = CELL_6;
+	sendData.data.params[7].ID = CELL_7;
+
 	static uint8_t needToSend = 0;
 	Endpoint_SelectEndpoint(VENDOR_OUT_EPADDR);
 	//simply implements a loopback
@@ -66,7 +75,7 @@ void ProcessUSB() {
 		while( ( error = Endpoint_Write_Stream_LE(&sendData, VENDOR_IN_EPSIZE, NULL) ) == ENDPOINT_RWSTREAM_IncompleteTransfer ) {
 			++trials;
 		}
-		DisplayValue(trials);
+		//DisplayValue(trials);
 		
 		Endpoint_ClearIN();
 		needToSend = 0;
@@ -87,7 +96,8 @@ void EVENT_USB_Device_Disconnect(void) {
 //Adapted form LUFA's
 void EVENT_USB_Device_ControlRequest(void) {
 	/* Handle HID Class specific requests */
-	switch (USB_ControlRequest.bRequest){
+	uint8_t req = USB_ControlRequest.bRequest;
+	switch (req){
 	case HID_REQ_GetReport:
 		if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | 
 		                                         REQTYPE_CLASS | 
@@ -102,6 +112,17 @@ void EVENT_USB_Device_ControlRequest(void) {
 			Endpoint_ClearOUT();
 		}
 		break;
+	case REQ_GetDescriptor :
+	case REQ_GetConfiguration :
+	case REQ_SetConfiguration :
+	case REQ_SetAddress :
+	case 0x0a :
+		break;
+	default :
+		DisplayValue(req);
+		break;
+		//default :
+		//ReportError(4);
 	}
 }
 
