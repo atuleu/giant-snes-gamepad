@@ -12,12 +12,8 @@
 
 
 Gamepad::Gamepad(libusb_device * device) 
-	: d_device(device, &libusb_unref_device)
-	, d_bulkInEP(0xff)
-	, d_bulkOutEP(0xff)
-	, d_maxRetries(20){
+	: d_device(device, &libusb_unref_device) {
 	
-
 #ifdef LIBUSB_DARWIN_WORKAROUND
 	//need to open to avoid segfault of libsusb, see
 	//http://www.libusb.org/ticket/171
@@ -122,7 +118,7 @@ void Gamepad::Open() {
 		libusb_device_handle * handle;
 		lusb_call(libusb_open,d_device.get(),&handle);
 		d_handle = HandlePtr(handle,&libusb_close);
-		lusb_call(libusb_claim_interface,d_handle.get(),d_vendorInterface);
+		//lusb_call(libusb_claim_interface,d_handle.get(),d_vendorInterface);
 		
 	} catch(...) {
 		d_mutex.unlock();
@@ -134,7 +130,7 @@ void Gamepad::Open() {
 void Gamepad::Close() {
 	d_mutex.lock();
 	try {
-		lusb_call(libusb_release_interface,d_handle.get(),d_vendorInterface);
+		//		lusb_call(libusb_release_interface,d_handle.get(),d_vendorInterface);
 	} catch( const std::exception & e) {
 		LOG(ERROR) << "Got error on Gamepad interface release: " << e.what(); 
 	}
@@ -153,7 +149,7 @@ void Gamepad::Init() {
 	
 	//inspects and check interface
 
-	const libusb_interface_descriptor *hid(NULL),*vendor(NULL);
+	const libusb_interface_descriptor *hid(NULL);
 	for(unsigned int i = 0; i < config->bNumInterfaces; ++i) {
 		const struct libusb_interface & itf = config->interface[i];
 		for(unsigned int a = 0; a < itf.num_altsetting; ++a) {
@@ -164,180 +160,28 @@ void Gamepad::Init() {
 			     iDesc.bInterfaceProtocol ==  PROTOCOL_NON_BOOT ) {
 				hid = &iDesc;
 			}
-
-			if ( vendor == NULL && 
-			     iDesc.bInterfaceClass == CLASS_VENDOR_SPECIFIC &&
-			     iDesc.bInterfaceSubClass == SUBCLASS_VENDOR_SPECIFIC &&
-			     iDesc.bInterfaceProtocol == PROTOCOL_VENDOR_SPECIFIC ) {
-				vendor = &iDesc;
-			}
 		}
 	}
 
-	if(vendor == NULL || hid == NULL) {
+	if( hid == NULL) {
 		std::ostringstream os;
 		os << "Bad USB Device configuration. Found " << config->bNumInterfaces
-		   << " interfaces; ";
-		if(hid) { 
-			os << "One of them (" << (int)hid->bInterfaceNumber << ") is a HID device, but no Vendor specific interface found";
-		} else if(vendor) {
-			os << "One of them (" << (int)vendor->bInterfaceNumber << ") is a Vendor specific interface, but no HID found";
-		} else {
-			os << "No vendor specific or HID interface found";
-		}
+		   << " None of them is HID";
 		throw std::runtime_error(os.str());
 	}
 
-	d_vendorInterface = vendor->bInterfaceNumber;
-
-	// check for Vendor interface endpoint
-	const struct libusb_endpoint_descriptor *in(NULL),*out(NULL);
-	for(unsigned int i = 0 ; i < vendor->bNumEndpoints; ++i) {
-		uint8_t address = vendor->endpoint[i].bEndpointAddress;
-		//check if endpoint is an out endpoint
-		if(out == NULL && ! ( LIBUSB_ENDPOINT_IN & address) ) {
-			out = &(vendor->endpoint[i]);
-			continue;
-		}
-
-		if(in == NULL && (LIBUSB_ENDPOINT_IN & address) ) {
-			in = &(vendor->endpoint[i]);
-		}
-	}
-
-	if (in == NULL || out == NULL) {
-		std::ostringstream os;
-		os << "Bad USB Device configuration. Found " << vendor->bNumEndpoints 
-		   << " EP for Vendor interface;";
-		if(out) {
-			os << "One of them is OUT, but no IN found";
-		} else if (in) {
-			os << "One of them is IN, but no OUT found";
-		} else {
-			os << "Neither IN or OUT EP found";
-		}
-		throw std::runtime_error(os.str());
-	}
-
-
-	
-	d_bulkOutEP = out->bEndpointAddress;
-	d_bulkInEP = in->bEndpointAddress;
-
-	LOG(INFO) << "Device Initialized accordingly with OUT EP 0x" << std::hex 
-	          << (int)d_bulkOutEP << " and IN EP 0x" << (int)d_bulkInEP;
+	LOG(INFO) << "Device Initialized accordingly";
 }
 
-
-unsigned int Gamepad::MaxRetries() const { 
-	return d_maxRetries; 
-}
-
-void Gamepad::SetMaxRetries(unsigned int max) { 
-	d_maxRetries = max;
-}
-
-
-void Gamepad::BulkAll(bool in, uint8_t * data, size_t size) const {
-	size_t written = 0;
-	uint8_t ep = (in == true) ? d_bulkInEP : d_bulkOutEP;
-
-	DLOG(INFO) << "Bulk Transfer of " << size << " bytes starting " << (void*)data 
-	           << " to EP 0x" << std::hex << (int)ep << " of device " << d_handle;
-		
-	for (unsigned int i = d_maxRetries ; i > 0 ; --i) {
-		int transferred;
-		//warning timeout == 0 is NOT timeout infinite, at least on darwin !
-		lusb_call(libusb_bulk_transfer,
-		          d_handle.get(),
-		          ep,
-		          data + written,
-		          size - written,
-		          &transferred,
-		          100);
-		written += transferred;
-		if ( written == size ) {
-			break;
-		}
-
-	}
-
-	if( written < size ) {
-		std::ostringstream os;
-		os << "Could not transfer " << size 
-		   << " from address " << data 
-		   << " only " << written <<  " bytes written in " 
-		   << d_maxRetries << " trials";
-		throw std::runtime_error(os.str());
-	}
-
-}
-
-
-VendorInReport_t Gamepad::SendInstruction(GSGHostInstruction_e i, 
-                                           const ListOfParameter & params) {
-	AssertOpened();
-
-	if( i <= INST_NONE || i >= INST_MAX) {
-		throw std::out_of_range("Unrecognized instruction");
-	}
-
-	if( params.size() > NB_PARAMS) {
-		std::ostringstream os;
-		os << "Device only accepts a maximum of " << NB_PARAMS << " parameters, but " 
-		   << params.size() << " required";
-		throw std::out_of_range(os.str());
-	}
-	
-	VendorOutReport_t toSend;
-#ifndef NDEBUG
-	if (sizeof(toSend) != 26) {
-		std::ostringstream os;
-		os << "Internal Error, VendorOutSize_t byte size is " << sizeof(VendorOutReport_t)
-		   << " but 26 expected";
-		throw std::logic_error(os.str());
-	}
-#endif
-	//we should lock by mutexes any communication, to avoid to leave
-	//the device with half-communication, if close is used. Care
-	//should be taken with exception by catching and releasing
-	//any. Gosh I love go and its defer keyword
-	VendorInReport_t toRead;
-	d_mutex.lock();
-	try {
-		toSend.instructionID = i;
-		std::memset(&toSend.params,0,sizeof(toSend.params));
-		for(ListOfParameter::const_iterator p = params.begin();
-		    p != params.end();
-		    ++p ) {
-			toSend.params[p - params.begin()].ID = p->ID;
-			toSend.params[p - params.begin()].Value = p->Value;
-		}
-		DLOG(INFO) << "Sending Out Report ";
-		BulkAll(false,(uint8_t*)&toSend,sizeof(toSend));
-#ifdef LIBUSB_DARWIN_WORKAROUND
-		DLOG(INFO) << "CLearing halt condition on IN EP";
-		lusb_call(libusb_clear_halt,d_handle.get(),d_bulkInEP);
-#endif //LIBUSB_DARWIN_WORKAROUND
-
-		DLOG(INFO) << "Reading In Report ";
-		BulkAll(true,(uint8_t*)&toRead,sizeof(toRead));
-	} catch (...) {
-		d_mutex.unlock();
-		throw;
-	}
-	d_mutex.unlock();
-	return toRead;
-}
 
 const std::string VendorInErrorName(const VendorInError_e e) {
 	typedef std::map<VendorInError_e,std::string> NameByErrors;
 	static NameByErrors errors;
 	if(errors.empty()) {
 #define LOAD_ERROR(errName) do {  errors[errName] = #errName; }while(0)
-		LOAD_ERROR(VI_ERR_NO_ERROR);		
+		LOAD_ERROR(GSG_ERR_NO_ERROR);		
 #undef LOAD_ERROR
-		if(errors.size() < VI_ERROR_MAX) {
+		if(errors.size() < GSG_ERROR_MAX) {
 			throw std::logic_error("VendorInErrorName() not up to date");
 		}
 	}
@@ -350,128 +194,3 @@ const std::string VendorInErrorName(const VendorInError_e e) {
 	return fi->second;
 }
 
-void Gamepad::SetParameter(GSGParam_e id , uint16_t value) {
-	ListOfParameter params;
-	GSGParameter_t param;
-	param.ID = id;
-	param.Value = value;
-	params.push_back(param);
-
-	VendorInReport_t res = SendInstruction(INST_SET_PARAMS,params);
-
-	std::ostringstream os;
-	os << "setting parameter 0x"<< std::hex << (int)id << " to value " << std::dec << value;
-	CheckResponse(res,VI_TYPE_PARAM_RETURN,os.str());
-	//nothing to do
-}
-
-void Gamepad::CheckResponse(const VendorInReport_t & report,
-                            VendorInReportType_e expected, 
-                            const std::string & context) {
-	if(report.type != expected ) {
-		std::ostringstream os;
-		os << "Received back unexpected packet type 0x"<< std::hex << (int)report.type
-		   << " while " << context;
-		throw std::runtime_error(os.str());
-	}
-	
-	if(report.error != VI_ERR_NO_ERROR ) {
-		std::ostringstream os;
-		os << "Got error " << VendorInErrorName((VendorInError_e)report.error) 
-		   << " while " << context;
-		throw std::runtime_error(os.str());
-	}
-}
-
-uint16_t Gamepad::GetParameter(GSGParam_e p) {
-	ListOfParameterID ids;
-	ListOfParameter result;
-	
-	ids.push_back(p);
-	GetParametersPrivate(ids.begin(),ids.end(),result);
-
-	if( result.size() != 1) {
-		throw std::logic_error("Got wrong number of result while reading one parameter");
-	}
-	return result[0].Value;
-
-}
-
-
-void Gamepad::GetParameters(const ListOfParameterID & ids, 
-                            ListOfParameter & result) {
-	result.clear();
-	ListOfParameterID::const_iterator thisStart = ids.begin();
-	
-	while(thisStart != ids.end() ) {
-		ListOfParameterID::const_iterator thisEnd = thisStart;
-		for(; thisEnd - thisStart < NB_PARAMS && thisEnd != ids.end(); ++thisEnd) {
-		}
-
-		GetParametersPrivate(thisStart,thisEnd,result);
-
-		thisStart = thisEnd;
-
-	}
-}
-
-
-void Gamepad::GetParametersPrivate(const ListOfParameterID::const_iterator & start,
-                                   const ListOfParameterID::const_iterator & end,
-                                   ListOfParameter & result) {
-	ListOfParameter toSend;
-	std::ostringstream context;
-	context << " reading parameter(s) {";
-
-	for(ListOfParameterID::const_iterator id = start;
-	    id != end;
-	    ++id) {
-		GSGParameter_t p;
-		p.ID = *id;
-		p.Value = 0;
-		toSend.push_back(p);
-		context << std::hex << " 0x" << (int) *id;
-	}
-	context << " }";
-
-	VendorInReport_t res = SendInstruction(INST_READ_PARAMS,toSend);
-	
-	CheckResponse(res,VI_TYPE_PARAM_RETURN,context.str());
-
-	for(ListOfParameterID::const_iterator id = start;
-	    id != end;
-	    ++id) {
-		unsigned int i = id - start;
-		if ( res.data.params[i].ID != *id ) {
-			std::ostringstream os;
-			os << "USB Device send back parameter 0x" << std::hex << (int)res.data.params[i].ID 
-			   << " instead of 0x" << *id << " while " << context.str();
-			throw std::runtime_error(os.str());
-		}
-		GSGParameter_t p = res.data.params[i];
-		result.push_back(p);
-	}
-	
-}
-                                   
-const Gamepad::LoadCellValues & Gamepad::GetCells() {
-	d_cellValues.assign(0,NB_CELLS);
-
-	ListOfParameter  toSend;
-	VendorInReport_t res = SendInstruction(INST_FETCH_CELL_VALUES,toSend);
-	
-	CheckResponse(res,VI_TYPE_CELL_RETURN,"fetching cells values");
-
-	for(unsigned int i = 0; i < NB_CELLS; ++i) {
-		d_cellValues[i] = res.data.cells[i];
-	}
-
-	return d_cellValues;
-}
-
-
-
-void Gamepad::SaveParamInEEPROM() {
-	VendorInReport_t res = SendInstruction(INST_SAVE_IN_EEPROM,ListOfParameter());
-	CheckResponse(res,VI_TYPE_PARAM_RETURN," saving parameter in eeprom");
-}
