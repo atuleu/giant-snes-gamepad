@@ -36,7 +36,7 @@ void SetParamCallback(uint16_t index, uint16_t value) {
 void SaveInEEPROMCallback(uint16_t index, uint16_t value) {
 	Endpoint_ClearSETUP();
 	for ( unsigned int i = 0; i < GSG_NUM_PARAMS; ++i ) {
-		eeprom_update_word( (uint16_t *) ( 2 * i ) , Parameters[i] );
+		eeprom_update_word( (uint16_t *) ( 2 * i + 2 ) , Parameters[i] );
 	}
 
 	//acknowledge the transaction
@@ -62,7 +62,7 @@ void InitUSB() {
 
 	// Loads the param value from the EEPROM
 	for ( uint8_t i = 0; i < GSG_NUM_PARAMS; ++i ) {
-		Parameters[i] = eeprom_read_word( (const uint16_t*) ( 2 * i ) );
+		Parameters[i] = eeprom_read_word( (const uint16_t*) ( 2 * i + 2 ) );
 	}
 
 	// Loads all Callback
