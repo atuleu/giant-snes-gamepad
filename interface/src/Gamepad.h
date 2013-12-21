@@ -13,7 +13,7 @@ class Gamepad {
 public :
 	typedef std::shared_ptr<Gamepad>    Ptr;
 	typedef std::vector<Gamepad::Ptr>   List;
-	typedef std::vector<GSGParam_e>     ListOfParameterID;
+	typedef std::vector<uint16_t>       ListOfParameter;
 	typedef std::vector<uint16_t>       LoadCellValues;
 	// LUFA's VID
 	const static uint16_t ID_VENDOR   = 0x03eb;
@@ -36,7 +36,10 @@ public :
 	void Open();
 	void Close();
 
-
+	void ReadAllParams(ListOfParameter & params);
+	void SetParam(GSGParam_e id, uint16_t value);
+	void FetchLoadCellValue(LoadCellValues & cells);
+	void SaveParamInEEPROM();
 
 private :
 	typedef std::shared_ptr<libusb_device>        DevicePtr;

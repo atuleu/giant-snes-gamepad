@@ -140,6 +140,20 @@ void Gamepad::Close() {
 }
 
 
+
+void Gamepad::ReadAllParams(ListOfParameter & params) {
+	params.assign(GSG_NUM_PARAMS,0x6942);
+	lusb_call(libusb_control_transfer,
+	          d_handle.get(),
+	          REQ_VENDOR,
+	          INST_READ_ALL_PARAMS,
+	          0,
+	          0,
+	          (unsigned char *)&params[0],
+	          2 * GSG_NUM_PARAMS,
+	          0);
+}
+
 void Gamepad::Init() {
 	typedef std::shared_ptr<struct libusb_config_descriptor> ConfigPtr;
 	struct libusb_config_descriptor * _config(NULL);

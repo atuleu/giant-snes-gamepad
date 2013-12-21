@@ -72,5 +72,15 @@ void Application::Run() {
 	dev->Open();
 	libusb_set_debug(NULL,3);
 	LOG(INFO) << "Done";
+	Gamepad::ListOfParameter params;
+	dev->ReadAllParams(params);
+
+	std::cout << "Parameters value :" << std::endl;
+	for (Gamepad::ListOfParameter::const_iterator p = params.begin();
+	     p != params.end();
+	     ++p ) {
+		std::cout << std::dec << (int)(p - params.begin()) << ": 0x" << std::hex << (int)(*p) << std::endl;
+	}
+
 
 }
