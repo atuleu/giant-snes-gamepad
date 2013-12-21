@@ -66,7 +66,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor = {
 		.Header					= {.Size = sizeof(USB_Descriptor_Configuration_Header_t), .Type = DTYPE_Configuration },
 		
 		.TotalConfigurationSize = sizeof(USB_Descriptor_Configuration_t),
-		.TotalInterfaces		= 2, //change here if other interfaces
+		.TotalInterfaces		= 1, //change here if other interfaces
 		
 		.ConfigurationNumber	= 1,
 		.ConfigurationStrIndex	= NO_DESCRIPTOR,
@@ -136,7 +136,7 @@ uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
 	case DTYPE_Configuration:
 		address = &ConfigurationDescriptor;
 		size    = sizeof(USB_Descriptor_Configuration_t);
-			break;
+		break;
 	case DTYPE_String:
 		switch(descriptorNumber) {
 		case STR_LANGUAGE:

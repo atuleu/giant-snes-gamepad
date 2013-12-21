@@ -1,9 +1,77 @@
 #include "USB.h"
 #include "Descriptor.h"
 #include "Gamepad.h"
+#include <avr/eeprom.h>
+
+uint16_t Parameters[GSG_NUM_PARAMS];
+
+void eeprom_update_word(uint16_t * address, uint16_t value) {
+	uint16_t curVal = eeprom_read_word(address);
+	if ( curVal == value ) {
+		return;
+	}
+	eeprom_write_word(address,value);
+}
+
+
+void ReadAllCallback(uint16_t index, uint16_t value) {
+	Endpoint_ClearSETUP();
+			
+	/* Write the report data to the control endpoint */
+	Endpoint_Write_Control_Stream_LE(&Parameters, sizeof(Parameters));
+	//Clear IN called above
+	//acknowledge the transaction
+	Endpoint_ClearOUT();
+}
+
+void SetParamCallback(uint16_t index, uint16_t value) {
+	if(index >= GSG_NUM_PARAMS ) {
+		return;
+	}
+	Endpoint_ClearSETUP();
+	Parameters[index] = value;
+	//acknowledge the transaction
+	Endpoint_ClearStatusStage();
+}
+void SaveInEEPROMCallback(uint16_t index, uint16_t value) {
+	Endpoint_ClearSETUP();
+	for ( unsigned int i = 0; i < GSG_NUM_PARAMS; ++i ) {
+		eeprom_update_word( (uint16_t *) ( 2 * i ) , Parameters[i] );
+	}
+
+	//acknowledge the transaction
+	Endpoint_ClearStatusStage();
+}
+
+void FetchCellValueCallback(uint16_t index, uint16_t value) {
+	uint16_t cellValues[12];
+	memset(&cellValues,0,sizeof(cellValues));
+	Endpoint_ClearSETUP();
+	/* Write the report data to the control endpoint */
+	Endpoint_Write_Control_Stream_LE(&cellValues, sizeof(cellValues));
+	// ClearIN called by above
+
+	// acknowledge the status transaction
+	Endpoint_ClearOUT();
+}
+
 
 void InitUSB() {
 	USB_Init();
+
+
+	// Loads the param value from the EEPROM
+	for ( uint8_t i = 0; i < GSG_NUM_PARAMS; ++i ) {
+		Parameters[i] = eeprom_read_word( (const uint16_t*) ( 2 * i ) );
+	}
+
+	// Loads all Callback
+	IMetaData[INST_READ_ALL_PARAMS].userData = &ReadAllCallback;
+	IMetaData[INST_SET_PARAM].userData = &SetParamCallback;
+	IMetaData[INST_SAVE_IN_EEPROM].userData = &SaveInEEPROMCallback;
+	IMetaData[INST_FETCH_CELL_VALUES].userData = &FetchCellValueCallback;
+	
+
 }
 
 void ProcessUSB() {
@@ -41,6 +109,14 @@ void EVENT_USB_Device_Disconnect(void) {
 void EVENT_USB_Device_ControlRequest(void) {
 	/* Handle HID Class specific requests */
 	uint8_t req = USB_ControlRequest.bRequest;
+
+	if (USB_ControlRequest.bmRequestType == REQ_VENDOR ) {
+		EVENT_USB_Device_VendorRequest(USB_ControlRequest.bRequest,
+		                               USB_ControlRequest.wIndex,
+		                               USB_ControlRequest.wValue);
+		return;
+	}
+
 	switch (req){
 	case HID_REQ_GetReport:
 		if (USB_ControlRequest.bmRequestType == (REQDIR_DEVICETOHOST | 
@@ -56,19 +132,9 @@ void EVENT_USB_Device_ControlRequest(void) {
 			Endpoint_ClearOUT();
 		}
 		break;
-	case REQ_GetDescriptor :
-	case REQ_GetConfiguration :
-	case REQ_SetConfiguration :
-	case REQ_SetAddress :
-	case 0x0a :
-		break;
-	default :
-		DisplayValue(req);
-		break;
-		//default :
-		//ReportError(4);
 	}
 }
+
 
 
 void EVENT_USB_Device_ConfigurationChanged(void) {
@@ -85,5 +151,19 @@ void SetInHIDReport(GamepadInReport_t * in) {
 	// todo, sets actual data
 	in->buttons = 0;
 }
+
+
+
+void EVENT_USB_Device_VendorRequest(uint8_t bRequest, 
+                                    uint16_t wIndex,
+                                    uint16_t wValue) {
+	if (bRequest >= INST_NUMBER_OF_INSTRUCTION) {
+		return;
+	} 
+	(*(VendorRequest_fptr)IMetaData[bRequest].userData)(wIndex,
+	                                                    wValue);
+}
+
+
 
 

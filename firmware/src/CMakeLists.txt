@@ -3,11 +3,13 @@ set(SRC_FILES Descriptor.c
               USB.c
               Gamepad.c
               Systime.c
+              ${PROJECT_SOURCE_DIR}/../common/communication.c
               )
 set(HDR_FILES Descriptor.h
 	          USB.h
 	          Gamepad.h
 	          Systime.h
+	          ${PROJECT_SOURCE_DIR}/../common/communication.h
 	          )
 
 
