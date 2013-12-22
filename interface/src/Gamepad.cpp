@@ -124,17 +124,17 @@ void Gamepad::Open() {
 		d_mutex.unlock();
 		throw;
 	}
-	ReadAllParams();
 	d_mutex.unlock();
+	ReadAllParams();
 }
 
 void Gamepad::Close() {
 	d_mutex.lock();
-	try {
-		//		lusb_call(libusb_release_interface,d_handle.get(),d_vendorInterface);
-	} catch( const std::exception & e) {
-		LOG(ERROR) << "Got error on Gamepad interface release: " << e.what(); 
-	}
+	//	try {
+	//		lusb_call(libusb_release_interface,d_handle.get(),d_vendorInterface);
+	// } catch( const std::exception & e) {
+	//	LOG(ERROR) << "Got error on Gamepad interface release: " << e.what(); 
+	// }
 	// this does not throws
 	d_handle = HandlePtr();
 	d_mutex.unlock();
@@ -143,16 +143,106 @@ void Gamepad::Close() {
 
 
 void Gamepad::ReadAllParams() {
+	d_mutex.lock();
 	d_parameters.assign(GSG_NUM_PARAMS,0x6942);
-	lusb_call(libusb_control_transfer,
-	          d_handle.get(),
-	          REQ_VENDOR,
-	          INST_READ_ALL_PARAMS,
-	          0,
-	          0,
-	          (unsigned char *)&d_parameters[0],
-	          2 * GSG_NUM_PARAMS,
-	          0);
+	try {
+		lusb_call(libusb_control_transfer,
+		          d_handle.get(),
+		          REQ_VENDOR,
+		          INST_READ_ALL_PARAMS,
+		          0,
+		          0,
+		          (unsigned char *)&d_parameters[0],
+		          2 * GSG_NUM_PARAMS,
+		          0);
+	} catch(...) {
+		d_mutex.unlock();
+		throw;
+	}
+	d_mutex.unlock();
+}
+
+
+uint16_t Gamepad::GetParam(GSGParam_e id) {
+	if ( id >= GSG_NUM_PARAMS || id < 0) {
+		std::ostringstream os;
+		os << "Id: " << (int)id << " is out of range [ 0 ," << GSG_NUM_PARAMS << "[";
+		throw std::out_of_range(os.str());
+	}
+
+	uint16_t res;
+	d_mutex.lock();
+	res = d_parameters[id];
+	d_mutex.unlock();
+	return res;
+}
+
+
+void Gamepad::SetParam(GSGParam_e id, uint16_t value) {
+	if ( id >= GSG_NUM_PARAMS || id < 0) {
+		std::ostringstream os;
+		os << "Id: " << (int)id << " is out of range [ 0 ," << GSG_NUM_PARAMS << "[";
+		throw std::out_of_range(os.str());
+	}
+	d_mutex.lock();
+	try {
+		lusb_call(libusb_control_transfer,
+		          d_handle.get(),
+		          REQ_VENDOR,
+		          INST_SET_PARAM,
+		          id,
+		          value,
+		          NULL,
+		          0,
+		          0);
+		d_parameters[id] = value;
+	} catch (...) {
+		d_mutex.unlock();
+		throw;
+	}
+	d_mutex.unlock();
+}
+
+void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
+	cells.clear();
+	cells.assign(12,0x6942);
+	d_mutex.lock();
+	try {
+		lusb_call(libusb_control_transfer,
+		          d_handle.get(),
+		          REQ_VENDOR,
+		          INST_FETCH_CELL_VALUES,
+		          0,
+		          0,
+		          (unsigned char *)&(cells[0]),
+		          2 * 12,
+		          0);
+	} catch(...) {
+		d_mutex.unlock();
+		throw;
+	}
+	d_mutex.unlock();
+}
+
+
+void Gamepad::SaveParamInEEPROM() {
+	d_mutex.lock();
+	try {
+		lusb_call(libusb_control_transfer,
+		          d_handle.get(),
+		          REQ_VENDOR,
+		          INST_SAVE_IN_EEPROM,
+		          0,
+		          0,
+		          0,
+		          0,
+		          0);
+	} catch (...) {
+		d_mutex.unlock();
+		throw;
+	}
+
+	d_mutex.unlock();
 }
 
 void Gamepad::Init() {

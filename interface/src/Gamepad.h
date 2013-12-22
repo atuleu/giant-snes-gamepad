@@ -35,10 +35,9 @@ public :
 	void Open();
 	void Close();
 
-	template <typename T>
-	T GetParam(GSGParam_e) const;
+	uint16_t GetParam(GSGParam_e);
 	void SetParam(GSGParam_e id, uint16_t value);
-	void FetchLoadCellValue(LoadCellValues & cells);
+	void FetchLoadCellValues(LoadCellValues & cells);
 	void SaveParamInEEPROM();
 
 private :
