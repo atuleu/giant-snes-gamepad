@@ -13,7 +13,6 @@ class Gamepad {
 public :
 	typedef std::shared_ptr<Gamepad>    Ptr;
 	typedef std::vector<Gamepad::Ptr>   List;
-	typedef std::vector<uint16_t>       ListOfParameter;
 	typedef std::vector<uint16_t>       LoadCellValues;
 	// LUFA's VID
 	const static uint16_t ID_VENDOR   = 0x03eb;
@@ -36,7 +35,8 @@ public :
 	void Open();
 	void Close();
 
-	void ReadAllParams(ListOfParameter & params);
+	template <typename T>
+	T GetParam(GSGParam_e) const;
 	void SetParam(GSGParam_e id, uint16_t value);
 	void FetchLoadCellValue(LoadCellValues & cells);
 	void SaveParamInEEPROM();
@@ -44,16 +44,19 @@ public :
 private :
 	typedef std::shared_ptr<libusb_device>        DevicePtr;
 	typedef std::shared_ptr<libusb_device_handle> HandlePtr;
+	typedef std::vector<uint16_t>       ListOfParameter;
 	
 	
 	Gamepad(libusb_device * dev);
 	void AssertOpened() const;
 	void Init();
-	
+	void ReadAllParams();	
 
 	DevicePtr d_device;
 	HandlePtr d_handle;
 	std::mutex d_mutex;
+
+	ListOfParameter d_parameters;
 };
 
 

@@ -124,6 +124,7 @@ void Gamepad::Open() {
 		d_mutex.unlock();
 		throw;
 	}
+	ReadAllParams();
 	d_mutex.unlock();
 }
 
@@ -141,15 +142,15 @@ void Gamepad::Close() {
 
 
 
-void Gamepad::ReadAllParams(ListOfParameter & params) {
-	params.assign(GSG_NUM_PARAMS,0x6942);
+void Gamepad::ReadAllParams() {
+	d_parameters.assign(GSG_NUM_PARAMS,0x6942);
 	lusb_call(libusb_control_transfer,
 	          d_handle.get(),
 	          REQ_VENDOR,
 	          INST_READ_ALL_PARAMS,
 	          0,
 	          0,
-	          (unsigned char *)&params[0],
+	          (unsigned char *)&d_parameters[0],
 	          2 * GSG_NUM_PARAMS,
 	          0);
 }
