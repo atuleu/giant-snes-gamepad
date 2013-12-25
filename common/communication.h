@@ -87,9 +87,13 @@ extern GSGParam_e CellByButton[NUM_BUTTONS];
 
 
 #ifdef REQDIR_DEVICETOHOST
-#define REQ_VENDOR ( REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_DEVICE )
+#define REQ_VENDOR_IN ( REQDIR_DEVICETOHOST | REQTYPE_VENDOR | REQREC_DEVICE )
+#define REQ_VENDOR_OUT ( REQDIR_HOSTTODEVICE | REQTYPE_VENDOR | REQREC_DEVICE )
 #else 
-#define REQ_VENDOR ( ( 1<< 7 ) | ( 2 << 5 ) | ( 0 << 0 ) )
+#define REQ_VENDOR_IN ( ( 1 << 7 ) | ( 2 << 5 ) | ( 0 << 0 ) )
+#define REQ_VENDOR_OUT ( (  0 << 7 ) | ( 2 << 5 ) | ( 0 << 0 ) )
 #endif 
+
+#define IS_REQ_VENDOR(req) ( ( (req) & 0x7f ) == REQ_VENDOR_OUT )
 
 #endif //GSG_COMMON_COMMUNICATION_H_

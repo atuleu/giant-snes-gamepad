@@ -16,7 +16,7 @@ void eeprom_update_word(uint16_t * address, uint16_t value) {
 
 void ReadAllCallback(uint16_t index, uint16_t value) {
 	Endpoint_ClearSETUP();
-			
+
 	/* Write the report data to the control endpoint */
 	Endpoint_Write_Control_Stream_LE(&Parameters, sizeof(Parameters));
 	//Clear IN called above
@@ -28,19 +28,22 @@ void SetParamCallback(uint16_t index, uint16_t value) {
 	if(index >= GSG_NUM_PARAMS ) {
 		return;
 	}
+
 	Endpoint_ClearSETUP();
 	Parameters[index] = value;
 	//acknowledge the transaction
 	Endpoint_ClearStatusStage();
+	
 }
 void SaveInEEPROMCallback(uint16_t index, uint16_t value) {
 	Endpoint_ClearSETUP();
 	for ( unsigned int i = 0; i < GSG_NUM_PARAMS; ++i ) {
 		eeprom_update_word( (uint16_t *) ( 2 * i + 2 ) , Parameters[i] );
 	}
-
+	//Clear IN called above
 	//acknowledge the transaction
 	Endpoint_ClearStatusStage();
+	
 }
 
 void FetchCellValueCallback(uint16_t index, uint16_t value) {
@@ -110,7 +113,7 @@ void EVENT_USB_Device_ControlRequest(void) {
 	/* Handle HID Class specific requests */
 	uint8_t req = USB_ControlRequest.bRequest;
 
-	if (USB_ControlRequest.bmRequestType == REQ_VENDOR ) {
+	if ( IS_REQ_VENDOR(USB_ControlRequest.bmRequestType) ) {
 		EVENT_USB_Device_VendorRequest(USB_ControlRequest.bRequest,
 		                               USB_ControlRequest.wIndex,
 		                               USB_ControlRequest.wValue);

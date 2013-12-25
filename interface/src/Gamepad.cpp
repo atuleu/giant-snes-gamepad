@@ -148,7 +148,7 @@ void Gamepad::ReadAllParams() {
 	try {
 		lusb_call(libusb_control_transfer,
 		          d_handle.get(),
-		          REQ_VENDOR,
+		          REQ_VENDOR_IN,
 		          INST_READ_ALL_PARAMS,
 		          0,
 		          0,
@@ -185,17 +185,24 @@ void Gamepad::SetParam(GSGParam_e id, uint16_t value) {
 		throw std::out_of_range(os.str());
 	}
 	d_mutex.lock();
+	DLOG(INFO) << "Try to set param" << id << " to " << value;
 	try {
 		lusb_call(libusb_control_transfer,
 		          d_handle.get(),
-		          REQ_VENDOR,
+		          REQ_VENDOR_OUT,
 		          INST_SET_PARAM,
-		          id,
-		          value,
+		          value, // WTF they inversed it here o_O
+		          id,    // WTF they inversed it here o_O
 		          NULL,
 		          0,
 		          0);
 		d_parameters[id] = value;
+	} catch ( const LibUsbError & e) {
+		DLOG(ERROR) << "Could not set param "<< id << " to "<< value 
+		            << " : " << e.what() << " | " << libusb_strerror((libusb_error)e.Error());
+
+		d_mutex.unlock();
+		throw;
 	} catch (...) {
 		d_mutex.unlock();
 		throw;
@@ -210,7 +217,7 @@ void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
 	try {
 		lusb_call(libusb_control_transfer,
 		          d_handle.get(),
-		          REQ_VENDOR,
+		          REQ_VENDOR_IN,
 		          INST_FETCH_CELL_VALUES,
 		          0,
 		          0,
@@ -230,11 +237,11 @@ void Gamepad::SaveParamInEEPROM() {
 	try {
 		lusb_call(libusb_control_transfer,
 		          d_handle.get(),
-		          REQ_VENDOR,
+		          REQ_VENDOR_OUT,
 		          INST_SAVE_IN_EEPROM,
 		          0,
 		          0,
-		          0,
+		          NULL,
 		          0,
 		          0);
 	} catch (...) {

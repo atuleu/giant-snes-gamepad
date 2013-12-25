@@ -126,8 +126,17 @@ void MainWindow::on_timer_timeout() {
 	if(!d_usedGamepad) {
 		return;
 	}
+	static uint16_t id = 0;
+
 	Gamepad::LoadCellValues values;
-	d_usedGamepad->FetchLoadCellValues(values);
+
+	try {
+		d_usedGamepad->FetchLoadCellValues(values);
+	} catch ( const LibUsbError & e ) {
+		d_ui->statusbar->showMessage(QString("Failed to fetch load cell values: ") + e.what() );
+		return;
+	}
+
 	if ( values.size() != NUM_BUTTONS ) {
 		d_ui->statusbar->showMessage("Could not fetch values, got " + QString::number(values.size()) 
 		                             + ", but expected " + QString::number(NUM_BUTTONS) );
@@ -137,7 +146,6 @@ void MainWindow::on_timer_timeout() {
 	for(unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
 		d_cellViewers[i]->d_ui->valueDisplayLabel->setText(QString::number(values[i] & 0x3ff));
 	}
-
 
 }
 
