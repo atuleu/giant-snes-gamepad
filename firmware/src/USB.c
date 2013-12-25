@@ -3,6 +3,8 @@
 #include "Gamepad.h"
 #include <avr/eeprom.h>
 
+#include "Systime.h"
+
 uint16_t Parameters[GSG_NUM_PARAMS];
 
 void eeprom_update_word(uint16_t * address, uint16_t value) {
@@ -48,7 +50,7 @@ void SaveInEEPROMCallback(uint16_t index, uint16_t value) {
 
 void FetchCellValueCallback(uint16_t index, uint16_t value) {
 	uint16_t cellValues[12];
-	memset(&cellValues,0,sizeof(cellValues));
+	memset(&cellValues,( GetSystime() >> 4 ) ,sizeof(cellValues));
 	Endpoint_ClearSETUP();
 	/* Write the report data to the control endpoint */
 	Endpoint_Write_Control_Stream_LE(&cellValues, sizeof(cellValues));
