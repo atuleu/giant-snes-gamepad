@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QGroupBox" name="controlBox">
+      <property name="title">
+       <string>GroupBox</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="1">
+        <widget class="QComboBox" name="comboBox"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Gamepad :</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+      <zorder>gamepadBox</zorder>
+      <zorder>gamepadBox</zorder>
+      <zorder>gamepadBox</zorder>
+      <zorder>comboBox</zorder>
+      <zorder>label</zorder>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QGroupBox" name="gamepadBox">
+      <property name="title">
+       <string>GroupBox</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="5" column="3">
+        <widget class="CellViewer" name="startCell" native="true"/>
+       </item>
+       <item row="4" column="7">
+        <widget class="CellViewer" name="aCell" native="true"/>
+       </item>
+       <item row="3" column="6">
+        <widget class="CellViewer" name="xCell" native="true"/>
+       </item>
+       <item row="4" column="5">
+        <widget class="CellViewer" name="yCell" native="true"/>
+       </item>
+       <item row="5" column="1">
+        <widget class="CellViewer" name="downCell" native="true"/>
+       </item>
+       <item row="3" column="1">
+        <widget class="CellViewer" name="upCell" native="true"/>
+       </item>
+       <item row="4" column="2">
+        <widget class="CellViewer" name="rightCell" native="true"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="CellViewer" name="leftCell" native="true"/>
+       </item>
+       <item row="3" column="4">
+        <widget class="CellViewer" name="rightTriggerCell" native="true"/>
+       </item>
+       <item row="3" column="3">
+        <widget class="CellViewer" name="leftTriggerCell" native="true"/>
+       </item>
+       <item row="5" column="4">
+        <widget class="CellViewer" name="selectCell" native="true"/>
+       </item>
+       <item row="5" column="6">
+        <widget class="CellViewer" name="bCell" native="true"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuAction">
+    <property name="title">
+     <string>Action</string>
+    </property>
+    <addaction name="actionStart"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuAction"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionStart">
+   <property name="text">
+    <string>Start</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CellViewer</class>
+   <extends>QWidget</extends>
+   <header>CellViewer.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -72,5 +72,4 @@ void Application::Run() {
 	dev->Open();
 	LOG(INFO) << "Done";
 
-
 }
