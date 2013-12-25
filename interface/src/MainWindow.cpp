@@ -9,6 +9,8 @@
 #include <glog/logging.h> 
 
 #include <QSignalMapper>
+#include <QTimer>
+
 
 #include "CellViewer.h"
 #include "ui_CellViewer.h"
@@ -33,26 +35,17 @@ MainWindow::MainWindow(QWidget * parent )
 	: QMainWindow(parent)
 	, d_ui(new Ui::MainWindow) 
 	, d_thresholdMapper(new QSignalMapper(this) )
-	, d_releaseMapper(new QSignalMapper(this) ) {
-	
+	, d_releaseMapper(new QSignalMapper(this) ) 
+	, d_timer ( new QTimer(this)) {
+
+	d_thresholdMapper->setObjectName("thresholdMapper");
+	d_releaseMapper->setObjectName("releaseMapper");
+	d_timer->setObjectName("timer");
+
 	d_ui->setupUi(this);
 
 	LOG(INFO) << "Initializing libsusb";
 	lusb_call(libusb_init,NULL);
-
-	d_gamepads = Gamepad::ListAll();
-	
-
-	for(Gamepad::List::const_iterator g = d_gamepads.begin();
-	    g != d_gamepads.end();
-	    ++g ) {
-		//TODO add serial number
-		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()),+ ": serial number : N.A.");
-	}
-
-	if ( !d_gamepads.empty() ) {
-		d_ui->gamepadSelectBox->setCurrentIndex(0);
-	}
 
 	d_cellViewers.assign(12,NULL);
 	d_cellViewers[UP]            = d_ui->upCell;
@@ -87,17 +80,30 @@ MainWindow::MainWindow(QWidget * parent )
 	for( unsigned int i = 0; i < NUM_BUTTONS; ++i) {
 		d_cellViewers[i]->d_ui->nameLabel->setText(d_cellNames[i]);
 		
-		connect(d_cellViewers[i]->d_ui->thresholdBox,SIGNAL(valueChanged(int)),
-		        d_thresholdMapper,SLOT(map()));
 		d_thresholdMapper->setMapping(d_cellViewers[i]->d_ui->thresholdBox,
-		                              CellByButton[i]);
+		                              i);
 
-		connect(d_cellViewers[i]->d_ui->releaseBox,SIGNAL(valueChanged(int)),
-		        d_thresholdMapper,SLOT(map()));
-		
 		d_releaseMapper->setMapping(d_cellViewers[i]->d_ui->releaseBox,
-		                            CellByButton[i]);
+		                            i);
+
+		d_cellViewers[i]->setEnabled(false);
 	} 
+
+	d_gamepads = Gamepad::ListAll();
+	
+	for(Gamepad::List::const_iterator g = d_gamepads.begin();
+	    g != d_gamepads.end();
+	    ++g ) {
+		//TODO add serial number
+		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()),+ ": serial number : N.A.");
+	}
+
+
+	// last before initialization
+	if ( !d_gamepads.empty() ) {
+		d_ui->gamepadSelectBox->setCurrentIndex(0);
+	}
+
 }
 
 
@@ -116,13 +122,69 @@ void MainWindow::on_gamepadSelectBox_currentIndexChanged(int index) {
 }
 
 
+void MainWindow::on_timer_timeout() {
+	if(!d_usedGamepad) {
+		return;
+	}
+	Gamepad::LoadCellValues values;
+	d_usedGamepad->FetchLoadCellValues(values);
+	if ( values.size() != NUM_BUTTONS ) {
+		d_ui->statusbar->showMessage("Could not fetch values, got " + QString::number(values.size()) 
+		                             + ", but expected " + QString::number(NUM_BUTTONS) );
+		return;
+	}
+
+	for(unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
+		d_cellViewers[i]->d_ui->valueDisplayLabel->setText(QString::number(values[i] & 0x3ff));
+	}
+
+
+}
+
+void MainWindow::on_thresholdMapper_mapped(int button) {
+	if ( ! d_usedGamepad ) {
+		return;
+	}
+	try {
+	d_usedGamepad->SetParam((GSGParam_e)(CellByButton[button] + CELL_THRESHOLD), 
+	                        d_cellViewers[button]->d_ui->thresholdBox->value());
+	} catch ( const LibUsbError & e ) {
+		d_ui->statusbar->showMessage(QString("Got error: ") + e.what());
+	}
+	
+}
+
+
+void MainWindow::on_releaseMapper_mapped(int button) {
+	if ( ! d_usedGamepad ) {
+		return;
+	}
+	try {
+		d_usedGamepad->SetParam((GSGParam_e)(CellByButton[button] + CELL_RELEASE), 
+		                        d_cellViewers[button]->d_ui->releaseBox->value());
+	} catch ( const LibUsbError & e ) {
+		d_ui->statusbar->showMessage(QString("Got error: ") + e.what());
+	}
+
+}
+
+
+void MainWindow::on_actionQuit_triggered() {
+	Close();
+	this->close();
+}
+
 void MainWindow::Close() {
 	if( ! d_usedGamepad ) {
 		return;
 	}
 	
-	// TODO close timer
+	for( unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
+		d_cellViewers[i]->setEnabled(false);
+	}
 
+
+	d_timer->stop();
 
 	d_usedGamepad->Close();
 	d_usedGamepad = Gamepad::Ptr();
@@ -133,9 +195,23 @@ void MainWindow::Open(const Gamepad::Ptr & gamepad ) {
 	d_usedGamepad = gamepad;
 	d_usedGamepad->Open();
 
-	// TODO load all value in viewer
-	
 
-	// TODO start timer
+	for( unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
+		disconnect(d_cellViewers[i]->d_ui->thresholdBox,SIGNAL(valueChanged(int)),
+		           d_thresholdMapper,SLOT(map()));
+		disconnect(d_cellViewers[i]->d_ui->releaseBox,SIGNAL(valueChanged(int)),
+		           d_releaseMapper,SLOT(map()));
+		d_cellViewers[i]->d_ui->thresholdBox->setValue(d_usedGamepad->GetParam((GSGParam_e)(CellByButton[i] + CELL_THRESHOLD)));
+		d_cellViewers[i]->d_ui->releaseBox->setValue(d_usedGamepad->GetParam((GSGParam_e)(CellByButton[i] + CELL_RELEASE)));
+		connect(d_cellViewers[i]->d_ui->thresholdBox,SIGNAL(valueChanged(int)),
+		        d_thresholdMapper,SLOT(map()));
+		connect(d_cellViewers[i]->d_ui->releaseBox,SIGNAL(valueChanged(int)),
+		        d_releaseMapper,SLOT(map()));
+
+		d_cellViewers[i]->setEnabled(true);
+	}
+
+
+	d_timer->start(100);
 
 }

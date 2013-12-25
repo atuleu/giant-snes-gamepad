@@ -13,6 +13,7 @@ namespace Ui {
 
 class CellViewer;
 class QSignalMapper;
+class QTimer;
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -23,7 +24,11 @@ public :
 
 public slots :
 	void on_gamepadSelectBox_currentIndexChanged(int index);
-
+	void on_thresholdMapper_mapped(int);
+	void on_releaseMapper_mapped(int);
+	void on_timer_timeout();
+	void on_actionQuit_triggered();
+	
 private :
 
 	void Close();
@@ -38,5 +43,5 @@ private :
 	std::vector<QString>      d_cellNames;
 	QSignalMapper *           d_thresholdMapper;
 	QSignalMapper *           d_releaseMapper;
-
+	QTimer *                  d_timer;
 };
