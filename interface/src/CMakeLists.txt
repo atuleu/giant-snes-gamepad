@@ -7,7 +7,8 @@ set(SRC_FILES main.cpp
 set(HDR_FILES MainWindow.h
 	          Gamepad.h
 	          common.h
-	          CellViewer.h)
+	          CellViewer.h
+	          ${PROJECT_SOURCE_DIR}/../common/communication.h)
 
 set(UI_RAW_FILES MainWindow.ui CellViewer.ui)
 

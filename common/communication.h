@@ -41,6 +41,7 @@ typedef enum {
 	CELL_12    = CELL_11 + CELL_MAX_PARAMS,  // 0x17
 	GSG_NUM_PARAMS,                          // 0x19
 } GSGParam_e;
+
 	
 #define CELL_PARAM(nbCell,param) ( CELL_NUM_PARAMS * (nbCell) + (param))
 	
@@ -61,6 +62,25 @@ typedef struct {
 } GSGInstructionMetadata_t;
 
 extern GSGInstructionMetadata_t IMetaData[INST_NUMBER_OF_INSTRUCTION];
+
+
+typedef enum  {
+	UP            = 0,
+	DOWN          = 1,
+	LEFT          = 2,
+	RIGHT         = 3,
+	A             = 4,
+	B             = 5,
+	X             = 6,
+	Y             = 7,
+	START         = 8,
+	SELECT        = 9,
+	TRIGGER_LEFT  = 10,
+	TRIGGER_RIGHT = 11,
+	NUM_BUTTONS   = 12
+} GSGButton_e;
+
+extern GSGParam_e CellByButton[NUM_BUTTONS];
 
 #ifdef __cplusplus
 }

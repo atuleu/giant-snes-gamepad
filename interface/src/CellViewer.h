@@ -13,5 +13,6 @@ public :
 	~CellViewer();
 
 private:
+	friend class MainWindow;
 	Ui::CellViewer * d_ui;
 };
