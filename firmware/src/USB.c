@@ -67,7 +67,28 @@ void InitUSB() {
 
 	// Loads the param value from the EEPROM
 	for ( uint8_t i = 0; i < GSG_NUM_PARAMS; ++i ) {
-		Parameters[i] = eeprom_read_word( (const uint16_t*) ( 2 * i + 2 ) );
+		uint16_t * address = (uint16_t *) (2 * i + 2);
+		Parameters[i] = eeprom_read_word( address );
+		
+		//sets
+		if (Parameters[i] != 0xffff ) {
+			// parameter is not uninitialized
+			continue;
+		}
+
+		switch ( ( i - CELL_1  ) % CELL_MAX_PARAMS) {
+		case CELL_THRESHOLD :
+			Parameters[i] = 1 << 10;
+			break;
+		case CELL_RELEASE :
+			Parameters[i] = 0;
+			break;
+		default :
+			continue;
+		}
+
+		eeprom_update_word( address , Parameters[i] ); 
+
 	}
 
 	// Loads all Callback

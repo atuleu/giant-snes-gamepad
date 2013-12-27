@@ -18,15 +18,14 @@ typedef enum {
 
 // Parameter for a load cell
 typedef enum {
-	CELL_THRESHOLD   = 0,
+	CELL_THRESHOLD  = 0,
 	CELL_RELEASE    = 1,
 	CELL_MAX_PARAMS = 2
 } GSGCellParam_e;
 
-// Lists all parameters for a GSG
+// Lists all parameters for a GSG. Beware that all CELL_X should be contiguous.
 typedef enum {
-	LED_PERIOD     = 0,
-	CELL_1         = 1,
+	CELL_1         = 0,
 	CELL_2         = CELL_1  + CELL_MAX_PARAMS, // 0x03
 	CELL_3         = CELL_2  + CELL_MAX_PARAMS, // 0x05
 	CELL_4         = CELL_3  + CELL_MAX_PARAMS, // 0x07
