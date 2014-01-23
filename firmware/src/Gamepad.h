@@ -11,9 +11,12 @@ void ProcessGamepad();
 // interfaces
 
 // Error and diagnosis report
-void ReportError(uint8_t error);
-void DisplayValue(uint8_t value);
+//void ReportError(uint8_t error);
+//void DisplayValue(uint8_t value);
 
+
+uint16_t * GetCellValues();
+uint8_t * GetCellCount();
 
 // USB HID 
 void SetHIDReport(GamepadInReport_t * r);

@@ -58,9 +58,16 @@ void SetupHardware() {
 
 	
 	InitSystime();
+
 	InitGamepad();
 
 	InitUSB();
+
+
+	//we need to start ADC here !
+	ADCSRA |= _BV(ADEN);
+	ADCSRA |= _BV(ADSC);
+	
 }
 
 

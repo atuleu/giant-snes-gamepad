@@ -4,7 +4,7 @@
 #include "Gamepad.h"
 
 #include "Systime.h"
-
+#include "USB.h"
 
 /*
  * List of IO
@@ -55,90 +55,152 @@ void LedDisplayLSB(uint8_t value) {
 	
 }
 
+// we have a mean over a number of measurement, the number of measurement is 2^NUM_READ_PWR
+#define NUM_READ_PWR 2
+
+const uint8_t ADCMapping[NUM_BUTTONS] = {
+	0,
+	1,
+	4,
+	5,
+	6,
+	7,
+	8,
+	9,
+	10,
+	11,
+	12,
+	13 
+};
+
 
 typedef struct {
-	uint8_t   secondEllapsed;
+	uint16_t secondEllapsed;
 	Systime_t loopTime;
-	uint8_t   error;
-	uint8_t   value;
 	uint16_t  buttonStates;
+
+
+	volatile uint16_t cellUpdated;
+	//raw working Cell value
+	volatile uint16_t cellValues[NUM_BUTTONS];
+	//last available cell value, cleaned
+	uint16_t lastCellValues[NUM_BUTTONS];
+	uint8_t  cellCount[NUM_BUTTONS];
+	Systime_t onDate[NUM_BUTTONS];
+	volatile uint8_t error;
 } GamepadData_t;
 
 GamepadData_t GData;
 
 void InitGamepad() {
-	DDRB  |= _BV(4) | _BV(5) | _BV(6) | _BV(7);
-	DDRC  |= _BV(6) | _BV(7);
-	DDRD  |= _BV(7);
-	DDRE  |= _BV(6);
-
-	//sets pin as input with pull up
-	PORTD |= _BV(1) | _BV(4);
-	//should not be done, but who knows with this nasty bootloader.
-	DDRD &= ~(_BV(1) | _BV(4));
-
+	//set Digital 13 as output
+	DDRD |= _BV(7);
+	DDRE |= _BV(6);
 	GData.error = 0;
-	GData.value = 0;
 	GData.buttonStates = 0;
 	GData.secondEllapsed = 0;
 	GData.loopTime       = GetSystime();
+
+
+	//DIDR0 |= _BV(ADC7D) | _BV(ADC6D) | _BV(ADC5D) | _BV(ADC4D) | _BV(ADC1D) | _BV(ADC0D);
+	//DIDR2 |= _BV(ADC13D) | _BV(ADC12D) | _BV(ADC11D) | _BV(ADC10D) | _BV(ADC9D) | _BV(ADC8D);
+	
+	// init the ADC
+	// sets 128 prescaler , and Interrupt
+	ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0) | _BV(ADIE);
+	//sets reference as AVCC, with filtering Capacitor on AVREF
+	ADMUX |= 1 << 6;
+	//right align data
+	ADMUX &= ~_BV(ADLAR);
+	//sets the first conversion channel
+	uint8_t pin = ADCMapping[0];
+	if ( pin >> 3 ) {
+		ADCSRB |= _BV(MUX5);
+	} else {
+		ADCSRB &= ~_BV(MUX5);
+	}
+	ADMUX = (ADMUX & 0xf8 ) | (pin & 0x07);
+
+}
+
+ISR(ADC_vect) {
+	static uint8_t numRead       = 0;
+	static uint8_t currentButton = 0;
+	// we reset here, because we should only modify values that are
+	// currentButton
+	if(numRead == 0 ) {
+		GData.cellValues[currentButton] = 0;
+	}
+	
+
+	//we should read ADCL first, then ADCH, so lock is done right
+	GData.cellValues[currentButton] += ADCL;
+	GData.cellValues[currentButton] += (ADCH << 8) ;
+	
+
+	++numRead;
+	if( numRead == (1 << NUM_READ_PWR) ) {
+		++currentButton;
+		if( currentButton == NUM_BUTTONS ) {
+			currentButton = 0;
+		}
+		numRead = 0;
+		uint8_t pin = ADCMapping[currentButton];
+		if (pin >> 3 ) {
+			ADCSRB |= _BV(MUX5);
+		} else {
+			ADCSRB &= ~_BV(MUX5);
+		}
+		ADMUX = (ADMUX & 0xf8) | (0x07 & pin);
+	}  
+	ADCSRA |= _BV(ADSC);
 }
 
 
-void ReportError(uint8_t error) {
-	uint8_t savedSREG = SREG;
-	cli();
-	GData.error |= _BV(error);
-	SREG = savedSREG;
-}
-
-
-void DisplayValue(uint8_t value) {
-	uint8_t savedSREG = SREG;
-	cli();
-	GData.error = 0xff;
-	GData.value = value;
-	SREG = savedSREG;
-}
+#define _BV16(i) ( ((uint16_t)1) << i)
 
 void ProcessGamepad() {
-	if(GData.error == 0xff ) {
-		//report we display value
-		PORTD |= _BV(7);
-		PORTB |= _BV(4);
+	for ( uint8_t i = 0; i < NUM_BUTTONS; ++i ) {
+		//disable interrupt
+		uint8_t oldSREG = SREG;
+		cli();
 
-		if(GData.secondEllapsed & 0x01) {
-			//display MSB
-			LedDisplayLSB( 0x10 | (GData.value >> 4) );
+		uint16_t mask = GData.cellUpdated;
+		uint16_t value = GData.cellValues[i];
+	
+		if ( mask & _BV16(i) ) {
+			//restore interrupt state
+			SREG = oldSREG;
+			continue;
+		}
+	   
+		GData.cellUpdated &= ~_BV16(i);
+		value = value >> NUM_READ_PWR;
+		GData.lastCellValues[i] = value;
+		Systime_t now = GetSystime();
+		if ( value > Parameters[CELL_MAX_PARAMS * i  + CELL_THRESHOLD] ) {
+			if( (GData.buttonStates & _BV16(i) ) != 0 ){
+				GData.cellCount[i] += 1;
+			}
+			GData.buttonStates |= _BV16(i);
+			GData.lastCellValues[i] |= 0xa000;
+			GData.onDate[i] = now;
+
 		} else {
-			//display LSB
-			LedDisplayLSB(GData.value & 0x0f);
+			if( (now - GData.onDate[i]) >= Parameters[CELL_MAX_PARAMS * i + CELL_RELEASE] ) {
+				GData.buttonStates &= ~_BV16(i);
+				GData.lastCellValues[i] &= 0x7fff;
+			}
 		}
 
-	} else if (GData.error) {
-		PORTD |= _BV(7);
-		PORTB &= ~_BV(4);
-		LedDisplayLSB(GData.error);
-	} else  {
-		PORTD &= ~_BV(7);
-		PORTB |= _BV(4);
-		LedDisplayLSB(0);
+		//restore interrupt state
+		SREG = oldSREG;
 	}
 
-	if(PIND & _BV(4)) {
-		GData.buttonStates &= ~_BV(0);
-		PORTB &= ~_BV(6);
+	if(GData.error) {
+		PORTE |= _BV(6);
 	} else {
-		GData.buttonStates |= _BV(0);
-		PORTB |= _BV(6);
-	}
-
-	if( PIND & _BV(1) ) {
-		GData.buttonStates &= ~_BV(1);
-		PORTC &= ~_BV(6);
-	} else {
-		GData.buttonStates |= _BV(1);
-		PORTC |= _BV(6);
+		PORTE &= ~_BV(6);
 	}
 
 	//only process these every second
@@ -150,6 +212,10 @@ void ProcessGamepad() {
 	GData.loopTime += 1000;
 }
 
+
+uint16_t * GetCellValues() {
+	return GData.lastCellValues;
+}
 
 
 void SetHIDReport(GamepadInReport_t * report) {

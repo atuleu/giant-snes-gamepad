@@ -49,11 +49,13 @@ void SaveInEEPROMCallback(uint16_t index, uint16_t value) {
 }
 
 void FetchCellValueCallback(uint16_t index, uint16_t value) {
-	uint16_t cellValues[12];
-	memset(&cellValues,( GetSystime() >> 4 ) ,sizeof(cellValues));
+	uint16_t val[NUM_BUTTONS];
+	for(uint8_t i =0 ; i < NUM_BUTTONS; ++i ) {
+		val[i] = GetSystime() >> 8;
+	}
 	Endpoint_ClearSETUP();
 	/* Write the report data to the control endpoint */
-	Endpoint_Write_Control_Stream_LE(&cellValues, sizeof(cellValues));
+	Endpoint_Write_Control_Stream_LE(GetCellValues(), sizeof(uint16_t) * NUM_BUTTONS);
 	// ClearIN called by above
 
 	// acknowledge the status transaction
@@ -166,11 +168,6 @@ void EVENT_USB_Device_ControlRequest(void) {
 void EVENT_USB_Device_ConfigurationChanged(void) {
 	bool res = true;
 	res &= Endpoint_ConfigureEndpoint(GAMEPAD_IN_EPADDR, EP_TYPE_INTERRUPT, GAMEPAD_IN_EPSIZE, 1);
-
-	if ( res == false) {
-		ReportError(3);
-	}
-
 }
 
 void SetInHIDReport(GamepadInReport_t * in) {
