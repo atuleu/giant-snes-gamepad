@@ -36,11 +36,13 @@ MainWindow::MainWindow(QWidget * parent )
 	, d_ui(new Ui::MainWindow) 
 	, d_thresholdMapper(new QSignalMapper(this) )
 	, d_releaseMapper(new QSignalMapper(this) ) 
-	, d_timer ( new QTimer(this)) {
+	, d_timer ( new QTimer(this)) 
+	, d_scanTimer(new QTimer(this)) {
 
 	d_thresholdMapper->setObjectName("thresholdMapper");
 	d_releaseMapper->setObjectName("releaseMapper");
 	d_timer->setObjectName("timer");
+	d_scanTimer->setObjectName("scanTimer");
 
 	d_ui->setupUi(this);
 
@@ -89,23 +91,11 @@ MainWindow::MainWindow(QWidget * parent )
 		d_cellViewers[i]->setEnabled(false);
 	} 
 
-	d_gamepads = Gamepad::ListAll();
-	
-	for(Gamepad::List::const_iterator g = d_gamepads.begin();
-	    g != d_gamepads.end();
-	    ++g ) {
-		//TODO add serial number
-		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()),+ ": serial number : N.A.");
-	}
-
-
-	// last before initialization
-	if ( !d_gamepads.empty() ) {
-		d_ui->gamepadSelectBox->setCurrentIndex(0);
-	}
 	
 	d_ui->saveEEPROMButton->setDefaultAction(d_ui->actionSave_In_EEPROM);
 	d_ui->actionSave_In_EEPROM->setEnabled(false);
+
+	on_scanTimer_timeout();
 }
 
 
@@ -193,6 +183,26 @@ void MainWindow::on_actionSave_In_EEPROM_triggered() {
 	d_usedGamepad->SaveParamInEEPROM();
 }
 
+
+
+void MainWindow::on_scanTimer_timeout() {
+	d_gamepads = Gamepad::ListAll();
+	
+	for(Gamepad::List::const_iterator g = d_gamepads.begin();
+	    g != d_gamepads.end();
+	    ++g ) {
+		//TODO add serial number
+		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()),+ ": serial number : N.A.");
+	}
+
+
+	// last before initialization
+	if ( !d_gamepads.empty() && !d_usedGamepad) {
+		d_ui->gamepadSelectBox->setCurrentIndex(0);
+	}
+
+}
+
 void MainWindow::Close() {
 	if( ! d_usedGamepad ) {
 		return;
@@ -203,7 +213,6 @@ void MainWindow::Close() {
 	for( unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
 		d_cellViewers[i]->setEnabled(false);
 	}
-
 
 	d_timer->stop();
 

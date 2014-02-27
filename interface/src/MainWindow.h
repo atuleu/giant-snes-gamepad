@@ -29,6 +29,7 @@ public slots :
 	void on_timer_timeout();
 	void on_actionQuit_triggered();
 	void on_actionSave_In_EEPROM_triggered();
+	void on_scanTimer_timeout();
 private :
 
 	void Close();
@@ -43,5 +44,5 @@ private :
 	std::vector<QString>      d_cellNames;
 	QSignalMapper *           d_thresholdMapper;
 	QSignalMapper *           d_releaseMapper;
-	QTimer *                  d_timer;
+	QTimer *                  d_timer,* d_scanTimer;
 };
