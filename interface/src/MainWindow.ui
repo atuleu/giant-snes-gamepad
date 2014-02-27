@@ -17,17 +17,56 @@
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <widget class="QGroupBox" name="controlBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="title">
        <string>Gamepad Selection and Control</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="1">
-        <widget class="QComboBox" name="gamepadSelectBox"/>
+        <widget class="QComboBox" name="gamepadSelectBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="gamepadChoic">
+        <widget class="QLabel" name="gamepadChoice">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Gamepad :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QToolButton" name="saveEEPROMButton">
+         <property name="text">
+          <string>...</string>
          </property>
         </widget>
        </item>
@@ -36,6 +75,12 @@
     </item>
     <item row="1" column="0">
      <widget class="QGroupBox" name="gamepadBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
       <property name="title">
        <string>Gamepad Calibration</string>
       </property>
@@ -101,6 +146,7 @@
      <string>Action</string>
     </property>
     <addaction name="actionStart"/>
+    <addaction name="actionSave_In_EEPROM"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuAction"/>
@@ -117,6 +163,11 @@
    </property>
    <property name="shortcut">
     <string>Space</string>
+   </property>
+  </action>
+  <action name="actionSave_In_EEPROM">
+   <property name="text">
+    <string>Save In EEPROM</string>
    </property>
   </action>
  </widget>

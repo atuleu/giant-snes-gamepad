@@ -103,7 +103,9 @@ MainWindow::MainWindow(QWidget * parent )
 	if ( !d_gamepads.empty() ) {
 		d_ui->gamepadSelectBox->setCurrentIndex(0);
 	}
-
+	
+	d_ui->saveEEPROMButton->setDefaultAction(d_ui->actionSave_In_EEPROM);
+	d_ui->actionSave_In_EEPROM->setEnabled(false);
 }
 
 
@@ -182,11 +184,22 @@ void MainWindow::on_actionQuit_triggered() {
 	this->close();
 }
 
+void MainWindow::on_actionSave_In_EEPROM_triggered() {
+	if(!d_usedGamepad) {
+		LOG(ERROR) << "Could not save in EEPROM : no gamepad opened!";
+		return;
+	}
+
+	d_usedGamepad->SaveParamInEEPROM();
+}
+
 void MainWindow::Close() {
 	if( ! d_usedGamepad ) {
 		return;
 	}
-	
+	d_ui->actionSave_In_EEPROM->setEnabled(false);
+
+
 	for( unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
 		d_cellViewers[i]->setEnabled(false);
 	}
@@ -221,5 +234,5 @@ void MainWindow::Open(const Gamepad::Ptr & gamepad ) {
 
 
 	d_timer->start(100);
-
+	d_ui->actionSave_In_EEPROM->setEnabled(true);
 }

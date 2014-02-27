@@ -28,7 +28,7 @@ public slots :
 	void on_releaseMapper_mapped(int);
 	void on_timer_timeout();
 	void on_actionQuit_triggered();
-	
+	void on_actionSave_In_EEPROM_triggered();
 private :
 
 	void Close();
