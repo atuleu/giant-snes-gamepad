@@ -59,18 +59,18 @@ void LedDisplayLSB(uint8_t value) {
 #define NUM_READ_PWR 2
 
 const uint8_t ADCMapping[NUM_BUTTONS] = {
-	0,
-	1,
-	4,
-	5,
-	6,
-	7,
 	8,
-	9,
 	10,
 	11,
 	12,
-	13 
+	13,
+	9,
+	0,
+	7,
+	1,
+	2,
+	4,
+	5 
 };
 
 
