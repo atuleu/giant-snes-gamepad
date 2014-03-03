@@ -6,54 +6,8 @@
 #include "Systime.h"
 #include "USB.h"
 
-/*
- * List of IO
- * led 1 : D7
- * led 2 : B4
- * led 3 : B6
- * led 4 : C6
- * led 5 : E6
- * led 6 : B5
- * led 7 : B7
- * alive led : C7
- * button 1 : D4
- * button 2 : D1
- */
 
-void LedDisplayLSB(uint8_t value) {
-
-	if( value & ( 1 << 0 ) ) {
-		PORTB |= _BV(6);
-	} else {
-		PORTB &= ~_BV(6);
-	}
-	
-	if( value & ( 1 << 1 ) ) {
-		PORTC |= _BV(6);
-	} else {
-		PORTC &= ~_BV(6);
-	}
-	
-	if( value & ( 1 << 2 ) ) {
-		PORTE |= _BV(6);
-	} else {
-		PORTE &= ~_BV(6);
-	}
-	
-	if( value & ( 1 << 3 ) ) {
-		PORTB |= _BV(5);
-	} else {
-		PORTB &= ~_BV(5);
-	}
-
-	if( value & ( 1 << 4 ) ) {
-		PORTB |= _BV(7);
-	} else {
-		PORTB &= ~_BV(7);
-	}
-
-	
-}
+//Leds are in order in PB3 PB1 PD2 PD3
 
 // we have a mean over a number of measurement, the number of measurement is 2^NUM_READ_PWR
 #define NUM_READ_PWR 2
@@ -68,7 +22,7 @@ const uint8_t ADCMapping[NUM_BUTTONS] = {
 	0,
 	7,
 	1,
-	2,
+	6,
 	4,
 	5 
 };
@@ -94,8 +48,7 @@ GamepadData_t GData;
 
 void InitGamepad() {
 	//set Digital 13 as output
-	DDRD |= _BV(7);
-	DDRE |= _BV(6);
+
 	GData.error = 0;
 	GData.buttonStates = 0;
 	GData.secondEllapsed = 0;
@@ -120,6 +73,14 @@ void InitGamepad() {
 		ADCSRB &= ~_BV(MUX5);
 	}
 	ADMUX = (ADMUX & 0xf8 ) | (pin & 0x07);
+
+	//Init LEDs as output
+	
+	DDRB |= _BV(1) | _BV(3);
+	DDRC |= _BV(7);
+	DDRD |= _BV(2) | _BV(3);
+
+
 
 }
 
@@ -159,6 +120,35 @@ ISR(ADC_vect) {
 
 #define _BV16(i) ( ((uint16_t)1) << i)
 
+
+void PrintLSB(uint8_t value) {
+	//Leds are in order in PB3 PB1 PD2 PD3
+	if ( value & (1 << 0) ) {
+		PORTB |= _BV(3);
+	} else {
+		PORTB &= ~_BV(3);
+	}
+
+	if ( value & (1 << 1) ) {
+		PORTB |= _BV(1);
+	} else {
+		PORTB &= ~_BV(1);
+	}
+
+	if ( value & (1 << 2) ) {
+		PORTD |= _BV(2);
+	} else {
+		PORTD &= ~_BV(2);
+	}
+
+	if ( value & (1 << 3) ) {
+		PORTD |= _BV(3);
+	} else {
+		PORTD &= ~_BV(3);
+	}
+
+}
+
 void ProcessGamepad() {
 	for ( uint8_t i = 0; i < NUM_BUTTONS; ++i ) {
 		//disable interrupt
@@ -197,18 +187,13 @@ void ProcessGamepad() {
 		SREG = oldSREG;
 	}
 
-	if(GData.error) {
-		PORTE |= _BV(6);
-	} else {
-		PORTE &= ~_BV(6);
-	}
 
 	//only process these every second
 	if(GetSystime() - GData.loopTime < 1000) {
 		return;
 	}
 	GData.secondEllapsed += 1;
-	PORTC ^= _BV(7); //flash main led if disconnected from breadboard
+	PrintLSB(GData.secondEllapsed);
 	GData.loopTime += 1000;
 }
 

@@ -56,12 +56,15 @@ void SetupHardware() {
 
 	//rest of the init here
 
+	_delay_ms(20);
 	
+	InitUSB();	
+
 	InitSystime();
 
 	InitGamepad();
 
-	InitUSB();
+
 
 
 	//we need to start ADC here !
