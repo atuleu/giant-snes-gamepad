@@ -168,6 +168,7 @@ void EVENT_USB_Device_ControlRequest(void) {
 void EVENT_USB_Device_ConfigurationChanged(void) {
 	bool res = true;
 	res &= Endpoint_ConfigureEndpoint(GAMEPAD_IN_EPADDR, EP_TYPE_INTERRUPT, GAMEPAD_IN_EPSIZE, 1);
+	DisplayState(WAIT_FOR_PLAYER);
 }
 
 void SetInHIDReport(GamepadInReport_t * in) {

@@ -195,7 +195,7 @@ void MainWindow::on_scanTimer_timeout() {
 	    g != d_gamepads.end();
 	    ++g ) {
 		//TODO add serial number
-		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()),+ ": serial number : N.A.");
+		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()) + " Gamepad S.N. : " + (*g)->SerialNumber().c_str());
 
 		if(*g == d_usedGamepad) {
 			openedFound = true;
@@ -204,6 +204,7 @@ void MainWindow::on_scanTimer_timeout() {
 	}
 
 	if ( d_usedGamepad && !openedFound) {
+		LOG(INFO) << "Closing";
 		Close();
 	}
 

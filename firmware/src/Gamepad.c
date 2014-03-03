@@ -41,7 +41,8 @@ typedef struct {
 	uint16_t lastCellValues[NUM_BUTTONS];
 	uint8_t  cellCount[NUM_BUTTONS];
 	Systime_t onDate[NUM_BUTTONS];
-	volatile uint8_t error;
+	volatile DeviceError_e error;
+	volatile DisplayState_e state;
 } GamepadData_t;
 
 GamepadData_t GData;
@@ -49,7 +50,7 @@ GamepadData_t GData;
 void InitGamepad() {
 	//set Digital 13 as output
 
-	GData.error = 0;
+	GData.error = DEVICE_UNCONNECTED;
 	GData.buttonStates = 0;
 	GData.secondEllapsed = 0;
 	GData.loopTime       = GetSystime();
@@ -192,9 +193,54 @@ void ProcessGamepad() {
 	if(GetSystime() - GData.loopTime < 250) {
 		return;
 	}
+
 	GData.secondEllapsed += 1;
-	PrintLSB(GData.secondEllapsed);
 	GData.loopTime += 250;
+
+	if (GData.error) {
+		if(GData.secondEllapsed & 1) {
+			PrintLSB(0);
+		} else {
+			PrintLSB(GData.error);
+		}
+		return;
+	}
+
+
+	if(GData.state == WAIT_FOR_PLAYER ) {
+		static uint8_t ledOn = 3;
+		++ledOn;
+		if(ledOn == 4) {
+			ledOn = 0;
+		}
+		PrintLSB(1 << ledOn);
+		return;
+	}
+
+	PrintLSB(1 << GData.state);
+}
+
+
+void DisplayState(DisplayState_e s) {
+	if ( s < PLAYER_1 || s > WAIT_FOR_PLAYER) {
+		ReportError(1);
+	}
+	ReportError(0);
+	uint8_t oldSREG = SREG;
+	cli();
+	GData.state = s;
+	SREG = oldSREG;
+}
+
+void ReportError(DeviceError_e e) {
+	if( e & 0x0f == 0 || e != 0) {
+		e = 0x0a;
+	}
+	
+	uint8_t oldSREG = SREG;
+	cli();
+	GData.error = e;
+	SREG = oldSREG;
 }
 
 

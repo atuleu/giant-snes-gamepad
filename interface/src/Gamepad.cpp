@@ -15,28 +15,33 @@ Gamepad::DeviceByIdentifier Gamepad::s_devices;
 Gamepad::Gamepad(libusb_device * device) 
 	: d_device(device, &libusb_unref_device) {
 	
-#ifdef LIBUSB_DARWIN_WORKAROUND
 	//need to open to avoid segfault of libsusb, see
 	//http://www.libusb.org/ticket/171
 	libusb_device_handle * handle;
 	try { 
 		d_mutex.lock();
 		lusb_call(libusb_open,d_device.get(),&handle);
-#endif
-	Init();
-#ifdef LIBUSB_DARWIN_WORKAROUND
+		unsigned char buffer[1000];
+		libusb_device_descriptor desc;
+		lusb_call(libusb_get_device_descriptor,device,&desc);
+		if(desc.iSerialNumber == 0 ) {
+			throw std::runtime_error("Device has no serial number");
+		}
+		lusb_call(libusb_get_string_descriptor_ascii,handle,desc.iSerialNumber,buffer,1000);
+		d_serialNumber = (char*)buffer;
+		
+		Init();
 
-	// uneeded, but would like not to forget Open() call for
-	// cross-platform development
-	//Close();
+		libusb_close(handle);
+		d_mutex.unlock();	
+
 	} catch(...) {
 		libusb_close(handle);
 		d_mutex.unlock();
 		throw;
 	}
-	libusb_close(handle);
-	d_mutex.unlock();	
-#endif
+
+
 
 }
 
@@ -109,6 +114,7 @@ Gamepad::List Gamepad::ListAll() {
 		DeviceByIdentifier::const_iterator fi = s_devices.find(id);
 		if (fi == s_devices.end()) {
 			try { 
+				LOG(INFO) << "Found new device at "<< (int)portNumber << ":" << (int)busNumber << ":" << (int)devNumber;
 				s_devices[id] = Ptr(new Gamepad(device));
 			} catch (const std::exception & e) {
 				LOG(WARNING) << "USB device has right (vid,pid,bcd), but cannot create wrapper : " 
@@ -270,6 +276,10 @@ void Gamepad::SaveParamInEEPROM() {
 	}
 
 	d_mutex.unlock();
+}
+
+const std::string & Gamepad::SerialNumber() const {
+	return d_serialNumber;
 }
 
 void Gamepad::Init() {

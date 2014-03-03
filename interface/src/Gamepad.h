@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <cstdint>
+#include <string>
 
 #include <libusb.h>
 
@@ -41,6 +42,8 @@ public :
 	void FetchLoadCellValues(LoadCellValues & cells);
 	void SaveParamInEEPROM();
 
+	const std::string & SerialNumber() const;
+
 private :
 	typedef std::shared_ptr<libusb_device>        DevicePtr;
 	typedef std::shared_ptr<libusb_device_handle> HandlePtr;
@@ -58,6 +61,8 @@ private :
 	std::mutex d_mutex;
 
 	ListOfParameter d_parameters;
+	std::string d_serialNumber;
+
 	static DeviceByIdentifier s_devices;
 	static std::mutex         s_mutex;
 };
