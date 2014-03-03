@@ -12,19 +12,35 @@
 // we have a mean over a number of measurement, the number of measurement is 2^NUM_READ_PWR
 #define NUM_READ_PWR 2
 
+// Hardware connections. Button Name -> Arduino Pin -> ATMega32U4 Pin
+// Down          -> A0 -> 7
+// Left          -> A1 -> 6
+// Up            -> A2 -> 5
+// Trigger_Left  -> A3 -> 4
+// Right         -> A4 -> 1
+// Start         -> A5 -> 0
+
+// Select        -> D12 -> 9
+// B             -> D4  -> 8
+// A             -> D6  -> 10
+// X             -> D8  -> 11
+// Trigger Right -> D9  -> 12
+// Y             -> D10  -> 13
+
+// A map from communication order to channel pin
 const uint8_t ADCMapping[NUM_BUTTONS] = {
-	8,
-	10,
-	11,
-	12,
-	13,
-	9,
-	0,
-	7,
-	1,
-	6,
-	4,
-	5 
+	5, // UP
+	7, // DOWN
+	6, // LEFT
+	1, // RIGHT
+	10, //A
+	8,  //B
+	11, //X
+	13, //Y
+	0, //Start
+	9, //Select
+	4, //Trigger Left
+	12  //TRigger Right
 };
 
 
