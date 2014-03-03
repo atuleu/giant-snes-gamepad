@@ -248,7 +248,7 @@ void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
 		          0,
 		          0,
 		          data,
-		          2 * 12,
+		          3 * 12,
 		          0);
 	} catch(...) {
 		d_mutex.unlock();

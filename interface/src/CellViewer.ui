@@ -6,38 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>200</width>
-    <height>130</height>
+    <width>397</width>
+    <height>221</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
-    <widget class="QLabel" name="nameLabel">
+   <item row="1" column="0">
+    <widget class="QLabel" name="valueLabel">
      <property name="text">
-      <string>Cell Name</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="thresholdLabel">
-     <property name="text">
-      <string>Treshold :</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QSpinBox" name="thresholdBox">
-     <property name="maximum">
-      <number>65535</number>
-     </property>
-     <property name="value">
-      <number>0</number>
+      <string>Value :</string>
      </property>
     </widget>
    </item>
@@ -48,24 +28,58 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="valueLabel">
+   <item row="1" column="2">
+    <widget class="QLabel" name="countLabel">
      <property name="text">
-      <string>Value :</string>
+      <string>Count :</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
+   <item row="1" column="3">
+    <widget class="QLabel" name="countDisplayLabel">
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2" colspan="2">
+    <widget class="QSpinBox" name="thresholdBox">
+     <property name="maximum">
+      <number>65535</number>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2" colspan="2">
+    <widget class="QSpinBox" name="releaseBox">
+     <property name="maximum">
+      <number>65535</number>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="thresholdLabel">
+     <property name="text">
+      <string>Treshold :</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
     <widget class="QLabel" name="releaseLabel">
      <property name="text">
       <string>Release (ms) :</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QSpinBox" name="releaseBox">
-     <property name="maximum">
-      <number>65535</number>
+   <item row="0" column="0" colspan="4">
+    <widget class="QLabel" name="nameLabel">
+     <property name="text">
+      <string>Cell Name</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>
