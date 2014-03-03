@@ -38,7 +38,7 @@ const USB_Descriptor_Device_t DeviceDescriptor ={
 
 	.ManufacturerStrIndex		= STR_MANUFACTURER,
 	.ProductStrIndex			= STR_PRODUCT,
-	.SerialNumStrIndex			= NO_DESCRIPTOR,
+	.SerialNumStrIndex			= USE_INTERNAL_SERIAL,
 
 	.NumberOfConfigurations		= FIXED_NUM_CONFIGURATIONS
 };

@@ -189,12 +189,12 @@ void ProcessGamepad() {
 
 
 	//only process these every second
-	if(GetSystime() - GData.loopTime < 1000) {
+	if(GetSystime() - GData.loopTime < 250) {
 		return;
 	}
 	GData.secondEllapsed += 1;
 	PrintLSB(GData.secondEllapsed);
-	GData.loopTime += 1000;
+	GData.loopTime += 250;
 }
 
 
