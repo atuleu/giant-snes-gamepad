@@ -96,6 +96,7 @@ MainWindow::MainWindow(QWidget * parent )
 	d_ui->actionSave_In_EEPROM->setEnabled(false);
 
 	on_scanTimer_timeout();
+	d_scanTimer->start(500);
 }
 
 
@@ -106,7 +107,7 @@ MainWindow::~MainWindow(){
 
 
 
-void MainWindow::on_gamepadSelectBox_currentIndexChanged(int index) {
+void MainWindow::on_gamepadSelectBox_activated(int index) {
 	Close();
 	if(index >= 0) {
 		Open(d_gamepads[index]);
@@ -188,17 +189,29 @@ void MainWindow::on_actionSave_In_EEPROM_triggered() {
 void MainWindow::on_scanTimer_timeout() {
 	d_gamepads = Gamepad::ListAll();
 	
+	d_ui->gamepadSelectBox->clear();
+	bool openedFound(false);
 	for(Gamepad::List::const_iterator g = d_gamepads.begin();
 	    g != d_gamepads.end();
 	    ++g ) {
 		//TODO add serial number
 		d_ui->gamepadSelectBox->addItem(QString::number(g - d_gamepads.begin()),+ ": serial number : N.A.");
+
+		if(*g == d_usedGamepad) {
+			openedFound = true;
+			d_ui->gamepadSelectBox->setCurrentIndex(g - d_gamepads.begin());
+		}
+	}
+
+	if ( d_usedGamepad && !openedFound) {
+		Close();
 	}
 
 
 	// last before initialization
 	if ( !d_gamepads.empty() && !d_usedGamepad) {
 		d_ui->gamepadSelectBox->setCurrentIndex(0);
+		on_gamepadSelectBox_activated(0);
 	}
 
 }

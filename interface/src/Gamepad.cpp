@@ -80,7 +80,6 @@ Gamepad::List Gamepad::ListAll() {
 
 	std::shared_ptr<libusb_device*> listPtr(list,LUsbDeviceListDeleter(false));
 	
-	DeviceByIdentifier newList;
 
 	List res;
 	for (unsigned int i = 0; i < count; ++i) {
@@ -92,10 +91,10 @@ Gamepad::List Gamepad::ListAll() {
 		uint8_t busNumber = libusb_get_bus_number(device);
 		uint8_t devNumber = libusb_get_device_address(device);
 
-		LOG(INFO) << "Found USB Device " << desc << " at "
-		          << (int)portNumber << "::" 
-		          << (int)busNumber << "::"
-		          << (int)devNumber;
+		DLOG(INFO) << "Found USB Device " << desc << " at "
+		           << (int)portNumber << "::" 
+		           << (int)busNumber << "::"
+		           << (int)devNumber;
 		
 		if( desc.idVendor  != ID_VENDOR  ||
 		    desc.idProduct != ID_PRODUCT ||
@@ -122,14 +121,9 @@ Gamepad::List Gamepad::ListAll() {
 		} else {
 			res.push_back(fi->second);
 		}
-		newList[id] = s_devices[id];		
 		s_mutex.unlock();
 		
 	}
-	s_mutex.lock();
-	s_devices.clear();
-	s_devices = newList;
-	s_mutex.unlock();
 
 	return res;
 }
@@ -308,7 +302,7 @@ void Gamepad::Init() {
 		throw std::runtime_error(os.str());
 	}
 
-	LOG(INFO) << "Device Initialized accordingly";
+	DLOG(INFO) << "Device Initialized accordingly";
 }
 
 

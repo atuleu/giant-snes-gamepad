@@ -23,7 +23,7 @@ public :
 
 
 public slots :
-	void on_gamepadSelectBox_currentIndexChanged(int index);
+	void on_gamepadSelectBox_activated(int index);
 	void on_thresholdMapper_mapped(int);
 	void on_releaseMapper_mapped(int);
 	void on_timer_timeout();
