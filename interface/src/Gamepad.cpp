@@ -9,7 +9,8 @@
 #include <glog/logging.h>
 
 
-
+std::mutex Gamepad::s_mutex;
+Gamepad::DeviceByIdentifier Gamepad::s_devices;
 
 Gamepad::Gamepad(libusb_device * device) 
 	: d_device(device, &libusb_unref_device) {
@@ -24,6 +25,7 @@ Gamepad::Gamepad(libusb_device * device)
 #endif
 	Init();
 #ifdef LIBUSB_DARWIN_WORKAROUND
+
 	// uneeded, but would like not to forget Open() call for
 	// cross-platform development
 	//Close();
@@ -63,7 +65,7 @@ std::ostream & operator << (std::ostream & out, const struct libusb_device_descr
 	    << "{ vid: 0x" << std::setw(4) << desc.idVendor 
 	    << " pid: 0x" << std::setw(4) << desc.idProduct 
 	    << " bcd: 0x" << std::setw(4) << desc.bcdDevice 
-	    << " }";
+	    << "}";
 	out.flags(old);
 	return out;
 }
@@ -77,14 +79,23 @@ Gamepad::List Gamepad::ListAll() {
 	}
 
 	std::shared_ptr<libusb_device*> listPtr(list,LUsbDeviceListDeleter(false));
+	
+	DeviceByIdentifier newList;
 
 	List res;
-
 	for (unsigned int i = 0; i < count; ++i) {
 		libusb_device *device = list[i];
 		struct libusb_device_descriptor desc;
 		lusb_call(libusb_get_device_descriptor,list[i],&desc);
-		LOG(INFO) << "Found USB Device " << desc;
+
+		uint8_t portNumber = libusb_get_port_number(device);
+		uint8_t busNumber = libusb_get_bus_number(device);
+		uint8_t devNumber = libusb_get_device_address(device);
+
+		LOG(INFO) << "Found USB Device " << desc << " at "
+		          << (int)portNumber << "::" 
+		          << (int)busNumber << "::"
+		          << (int)devNumber;
 		
 		if( desc.idVendor  != ID_VENDOR  ||
 		    desc.idProduct != ID_PRODUCT ||
@@ -92,20 +103,35 @@ Gamepad::List Gamepad::ListAll() {
 			libusb_unref_device(device);
 			continue;
 		}
-		
-		try { 
-			res.push_back(Ptr(new Gamepad(device)));
-		} catch (const std::exception & e) {
-			LOG(WARNING) << "USB device has right (vid,pid,bcd), but cannot create wrapper : " 
-			             << e.what();
-			continue;
-		}
 
+		Identifier id(devNumber + (busNumber << 8) + (portNumber << 16) );
+		//Save locally 
+		s_mutex.lock();
+		DeviceByIdentifier::const_iterator fi = s_devices.find(id);
+		if (fi == s_devices.end()) {
+			try { 
+				s_devices[id] = Ptr(new Gamepad(device));
+			} catch (const std::exception & e) {
+				LOG(WARNING) << "USB device has right (vid,pid,bcd), but cannot create wrapper : " 
+				             << e.what();
+				s_mutex.unlock();
+				continue;
+			}
+			res.push_back(s_devices[id]);
+
+		} else {
+			res.push_back(fi->second);
+		}
+		newList[id] = s_devices[id];		
+		s_mutex.unlock();
 		
 	}
-	return res;
-	
+	s_mutex.lock();
+	s_devices.clear();
+	s_devices = newList;
+	s_mutex.unlock();
 
+	return res;
 }
 
 void Gamepad::Open() {

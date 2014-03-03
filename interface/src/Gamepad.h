@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <memory>
 #include <cstdint>
 
@@ -43,8 +44,9 @@ public :
 private :
 	typedef std::shared_ptr<libusb_device>        DevicePtr;
 	typedef std::shared_ptr<libusb_device_handle> HandlePtr;
-	typedef std::vector<uint16_t>       ListOfParameter;
-	
+	typedef std::vector<uint16_t>                 ListOfParameter;
+	typedef uint32_t                              Identifier;
+	typedef std::map<Identifier,Ptr>              DeviceByIdentifier;
 	
 	Gamepad(libusb_device * dev);
 	void AssertOpened() const;
@@ -56,6 +58,8 @@ private :
 	std::mutex d_mutex;
 
 	ListOfParameter d_parameters;
+	static DeviceByIdentifier s_devices;
+	static std::mutex         s_mutex;
 };
 
 
