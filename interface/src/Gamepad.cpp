@@ -257,7 +257,7 @@ void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
 	d_mutex.unlock();
 
 	for(size_t i = 0; i < NUM_BUTTONS; ++i) {
-		uint16_t value = data[2 * i + 1 ] + (data[2 *i + 0] << 8 );
+		uint16_t value = data[2 * i + 0 ] + (data[2 *i + 1] << 8 );
 		uint8_t count = data[2 * NUM_BUTTONS + i]; 
 		cells.push_back(std::make_pair(value,count));
 	}
