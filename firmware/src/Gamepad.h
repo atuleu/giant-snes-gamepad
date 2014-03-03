@@ -30,7 +30,8 @@ void ReportError(DeviceError_e error);
 //void DisplayValue(uint8_t value);
 
 
-uint8_t * GetCellValues();
+uint16_t * GetCellValues();
+uint8_t * GetCellCount();
 
 
 // USB HID 

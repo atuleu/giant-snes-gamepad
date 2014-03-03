@@ -49,13 +49,12 @@ void SaveInEEPROMCallback(uint16_t index, uint16_t value) {
 }
 
 void FetchCellValueCallback(uint16_t index, uint16_t value) {
-	uint16_t val[NUM_BUTTONS];
-	for(uint8_t i =0 ; i < NUM_BUTTONS; ++i ) {
-		val[i] = GetSystime() >> 8;
-	}
+	uint8_t val[3 * NUM_BUTTONS];
+	memcpy(val,GetCellValues(), 2 * NUM_BUTTONS);
+	memcpy(&(val[2 * NUM_BUTTONS]),GetCellCount(),NUM_BUTTONS);
 	Endpoint_ClearSETUP();
 	/* Write the report data to the control endpoint */
-	Endpoint_Write_Control_Stream_LE(GetCellValues(), 3 * NUM_BUTTONS);
+	Endpoint_Write_Control_Stream_LE(val, 3 * NUM_BUTTONS);
 	// ClearIN called by above
 
 	// acknowledge the status transaction
