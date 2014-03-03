@@ -55,7 +55,7 @@ void FetchCellValueCallback(uint16_t index, uint16_t value) {
 	}
 	Endpoint_ClearSETUP();
 	/* Write the report data to the control endpoint */
-	Endpoint_Write_Control_Stream_LE(GetCellValues(), sizeof(uint16_t) * NUM_BUTTONS);
+	Endpoint_Write_Control_Stream_LE(GetCellValues(), 3 * NUM_BUTTONS);
 	// ClearIN called by above
 
 	// acknowledge the status transaction

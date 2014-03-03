@@ -38,8 +38,13 @@ typedef struct {
 	//raw working Cell value
 	volatile uint16_t cellValues[NUM_BUTTONS];
 	//last available cell value, cleaned
-	uint16_t lastCellValues[NUM_BUTTONS];
-	uint8_t  cellCount[NUM_BUTTONS];
+	union {
+		struct {
+			uint16_t lastValues[NUM_BUTTONS];
+			uint8_t  count[NUM_BUTTONS];
+		} plain;
+		uint8_t data[3 * NUM_BUTTONS];
+	} cell;
 	Systime_t onDate[NUM_BUTTONS];
 	volatile DeviceError_e error;
 	volatile DisplayState_e state;
@@ -167,20 +172,20 @@ void ProcessGamepad() {
 	   
 		GData.cellUpdated &= ~_BV16(i);
 		value = value >> NUM_READ_PWR;
-		GData.lastCellValues[i] = value;
+		GData.cell.plain.lastValues[i] = value;
 		Systime_t now = GetSystime();
 		if ( value > Parameters[CELL_MAX_PARAMS * i  + CELL_THRESHOLD] ) {
 			if( (GData.buttonStates & _BV16(i) ) != 0 ){
-				GData.cellCount[i] += 1;
+				GData.cell.plain.count[i] += 1;
 			}
 			GData.buttonStates |= _BV16(i);
-			GData.lastCellValues[i] |= 0xa000;
+			GData.cell.plain.lastValues[i] |= 0xa000;
 			GData.onDate[i] = now;
 
 		} else {
 			if( (now - GData.onDate[i]) >= Parameters[CELL_MAX_PARAMS * i + CELL_RELEASE] ) {
 				GData.buttonStates &= ~_BV16(i);
-				GData.lastCellValues[i] &= 0x7fff;
+				GData.cell.plain.lastValues[i] &= 0x7fff;
 			}
 		}
 
@@ -244,8 +249,8 @@ void ReportError(DeviceError_e e) {
 }
 
 
-uint16_t * GetCellValues() {
-	return GData.lastCellValues;
+uint8_t * GetCellValues() {
+	return GData.cell.data;
 }
 
 

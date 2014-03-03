@@ -30,8 +30,8 @@ void ReportError(DeviceError_e error);
 //void DisplayValue(uint8_t value);
 
 
-uint16_t * GetCellValues();
-uint8_t * GetCellCount();
+uint8_t * GetCellValues();
+
 
 // USB HID 
 void SetHIDReport(GamepadInReport_t * r);
