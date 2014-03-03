@@ -238,7 +238,7 @@ void Gamepad::SetParam(GSGParam_e id, uint16_t value) {
 
 void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
 	cells.clear();
-	cells.assign(12,0x6942);
+	uint8_t data[3 * NUM_BUTTONS];
 	d_mutex.lock();
 	try {
 		lusb_call(libusb_control_transfer,
@@ -247,7 +247,7 @@ void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
 		          INST_FETCH_CELL_VALUES,
 		          0,
 		          0,
-		          (unsigned char *)&(cells[0]),
+		          data,
 		          2 * 12,
 		          0);
 	} catch(...) {
@@ -255,6 +255,13 @@ void Gamepad::FetchLoadCellValues(LoadCellValues & cells) {
 		throw;
 	}
 	d_mutex.unlock();
+
+	for(size_t i = 0; i < NUM_BUTTONS; ++i) {
+		uint16_t value = data[2 * i + 1 ] + (data[2 *i + 0] << 8 );
+		uint8_t count = data[2 * NUM_BUTTONS + i]; 
+		cells.push_back(std::make_pair(value,count));
+	}
+
 }
 
 

@@ -137,7 +137,7 @@ void MainWindow::on_timer_timeout() {
 	}
 
 	for(unsigned int i = 0; i < NUM_BUTTONS; ++i ) {
-		d_cellViewers[i]->d_ui->valueDisplayLabel->setText(QString::number(values[i] & 0x3ff));
+		d_cellViewers[i]->d_ui->valueDisplayLabel->setText(QString::number(values[i].first & 0x3ff));
 	}
 
 }

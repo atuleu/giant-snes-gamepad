@@ -15,7 +15,7 @@ class Gamepad {
 public :
 	typedef std::shared_ptr<Gamepad>    Ptr;
 	typedef std::vector<Gamepad::Ptr>   List;
-	typedef std::vector<uint16_t>       LoadCellValues;
+	typedef std::vector<std::pair<uint16_t,uint8_t> >       LoadCellValues;
 	// LUFA's VID
 	const static uint16_t ID_VENDOR   = 0x03eb;
 	// LUFA's Test PID
