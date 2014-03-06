@@ -191,14 +191,14 @@ void ProcessGamepad() {
 		GData.lastCellValues[i] = value;
 		Systime_t now = GetSystime();
 		if ( value > Parameters[CELL_MAX_PARAMS * i  + CELL_THRESHOLD] ) {
-			if( (GData.buttonStates & _BV16(i) ) != 0 ){
+			if( (GData.buttonStates & _BV16(i) ) == 0 ){
 				GData.cellCount[i] += 1;
 			}
 			GData.buttonStates |= _BV16(i);
 			GData.lastCellValues[i] |= 0xa000;
 			GData.onDate[i] = now;
 
-		} else {
+		} else { // under threshold
 			if( (now - GData.onDate[i]) >= Parameters[CELL_MAX_PARAMS * i + CELL_RELEASE] ) {
 				GData.buttonStates &= ~_BV16(i);
 				GData.lastCellValues[i] &= 0x7fff;
